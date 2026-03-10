@@ -18,3 +18,4 @@ client/dist
 server/dist
 
 *.claude
+initial-prompt.txt
