@@ -1,0 +1,31 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ProgressProvider } from "./context/progress-context";
+import HomePage from "./pages/HomePage";
+import LearnPage from "./pages/LearnPage";
+import SubjectLearnPage from "./pages/SubjectLearnPage";
+import TopicLessonPage from "./pages/TopicLessonPage";
+import PracticePage from "./pages/PracticePage";
+import SubjectPracticePage from "./pages/SubjectPracticePage";
+import TopicQuizPage from "./pages/TopicQuizPage";
+import DashboardPage from "./pages/DashboardPage";
+import NotFoundPage from "./pages/NotFoundPage";
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <ProgressProvider>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/learn" element={<LearnPage />} />
+          <Route path="/learn/:subjectId" element={<SubjectLearnPage />} />
+          <Route path="/learn/:subjectId/:topicId" element={<TopicLessonPage />} />
+          <Route path="/practice" element={<PracticePage />} />
+          <Route path="/practice/:subjectId" element={<SubjectPracticePage />} />
+          <Route path="/practice/:subjectId/:topicId" element={<TopicQuizPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </ProgressProvider>
+    </BrowserRouter>
+  );
+}
