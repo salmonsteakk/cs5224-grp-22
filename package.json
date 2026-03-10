@@ -1,0 +1,19 @@
+{
+  "name": "learnbright",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "docker compose up --build -d",
+    "dev:logs": "docker compose up --build",
+    "stop": "docker compose down",
+    "restart": "docker compose down && docker compose up --build -d",
+    "logs": "docker compose logs -f",
+    "logs:server": "docker compose logs -f server",
+    "logs:client": "docker compose logs -f client",
+    "logs:db": "docker compose logs -f dynamodb-local",
+    "install:client": "cd client && pnpm install",
+    "install:server": "cd server && pnpm install",
+    "install:all": "cd client && pnpm install && cd ../server && pnpm install",
+    "clean": "docker compose down --rmi local --volumes --remove-orphans"
+  }
+}
