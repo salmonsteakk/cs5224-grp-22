@@ -17,3 +17,8 @@ export function signAuthToken(user: User): string {
     expiresIn,
   });
 }
+
+export function verifyAuthToken(token: string): AuthTokenPayload {
+  const decoded = jwt.verify(token, process.env.JWT_SECRET || DEFAULT_JWT_SECRET);
+  return decoded as AuthTokenPayload;
+}

@@ -54,3 +54,30 @@ export async function login(req: Request, res: Response) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
+export async function me(req: Request, res: Response) {
+  if (!req.auth?.sub) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const userDoc = await UserModel.get(req.auth.sub);
+    const user = userDoc?.toJSON() as User | undefined;
+
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    if (user.status !== "active") {
+      res.status(403).json({ error: "User account is inactive" });
+      return;
+    }
+
+    res.json({ user: toAuthUser(user) });
+  } catch (error) {
+    console.error("Error fetching current user:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
