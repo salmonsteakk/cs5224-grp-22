@@ -79,18 +79,13 @@ export async function seedDatabase(): Promise<void> {
   await ensureUsersTable();
 
   try {
-    const existing = await SubjectModel.get("math");
-    if (existing) {
-      console.log("Database already seeded, skipping.");
-      return;
+    const existingSubject = await SubjectModel.get("math");
+    if (existingSubject) {
+      console.log("Subjects already seeded, skipping.");
+    } else {
+      await SubjectModel.batchPut(subjects);
+      console.log(`Database seeded with ${subjects.length} subjects.`);
     }
-  } catch {
-    // Item not found — proceed with seeding
-  }
-
-  try {
-    await SubjectModel.batchPut(subjects);
-    console.log(`Database seeded with ${subjects.length} subjects.`);
   } catch (error) {
     console.error("Failed to seed database:", error);
     throw error;
