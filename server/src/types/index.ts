@@ -31,3 +31,12 @@ export interface Subject {
   color: "math" | "science";
   topics: Topic[];
 }
+
+export interface User {
+  id: string;
+  email: string;
+  passwordHash: string;
+  name: string;
+  role: "student";
+  status: "active" | "disabled";
+}
