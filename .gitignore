@@ -19,3 +19,12 @@ server/dist
 
 *.claude
 initial-prompt.txt
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+
+# Installers
+AWSCLIV2.pkg
