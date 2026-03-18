@@ -29,7 +29,11 @@ export function toAuthUser(user: User): AuthUser {
 }
 
 export async function findUserByEmail(email: string): Promise<User | undefined> {
-  const users = await UserModel.scan("email").eq(normalizeEmail(email)).limit(1).exec();
+  const users = await UserModel.query("email")
+    .eq(normalizeEmail(email))
+    .using("emailIndex")
+    .limit(1)
+    .exec();
   return users[0]?.toJSON() as User | undefined;
 }
 
