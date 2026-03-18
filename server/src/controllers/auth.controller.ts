@@ -3,20 +3,23 @@ import { UserModel } from "../models/User.js";
 import { verifyPassword } from "../utils/password.js";
 import { signAuthToken } from "../utils/jwt.js";
 import type { AuthUser, User } from "../types/index.js";
+import {
+  AuthServiceError,
+  findUserByEmail,
+  normalizeEmail,
+  registerUser,
+  toAuthUser,
+} from "../services/auth.service.js";
 
 interface LoginRequestBody {
   email?: string;
   password?: string;
 }
 
-function toAuthUser(user: User): AuthUser {
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    status: user.status,
-  };
+interface RegisterRequestBody {
+  email?: string;
+  password?: string;
+  name?: string;
 }
 
 export async function login(req: Request, res: Response) {
@@ -27,11 +30,10 @@ export async function login(req: Request, res: Response) {
     return;
   }
 
-  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedEmail = normalizeEmail(email);
 
   try {
-    const users = await UserModel.scan("email").eq(normalizedEmail).limit(1).exec();
-    const user = users[0]?.toJSON() as User | undefined;
+    const user = await findUserByEmail(normalizedEmail);
 
     if (!user || !verifyPassword(password, user.passwordHash)) {
       res.status(401).json({ error: "Invalid email or password" });
@@ -51,6 +53,33 @@ export async function login(req: Request, res: Response) {
     });
   } catch (error) {
     console.error("Error logging in user:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function register(req: Request, res: Response) {
+  const { email, password, name } = req.body as RegisterRequestBody;
+
+  if (!email || !password) {
+    res.status(400).json({ error: "Email and password are required" });
+    return;
+  }
+
+  if (password.length < 8) {
+    res.status(400).json({ error: "Password must be at least 8 characters" });
+    return;
+  }
+
+  try {
+    const result = await registerUser({ email, password, name });
+    res.status(201).json(result);
+  } catch (error) {
+    if (error instanceof AuthServiceError) {
+      res.status(error.statusCode).json({ error: error.message });
+      return;
+    }
+
+    console.error("Error registering user:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
