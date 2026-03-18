@@ -159,14 +159,47 @@ All three services are orchestrated via `docker-compose.yml`:
 
 - **Docker** and **Docker Compose** (via Docker Desktop, OrbStack, or similar)
 - **Node.js 18+** and **pnpm** (for installing dependencies)
+- **AWS CLI** (for deploying to AWS)
+- **Terraform** (for provisioning infrastructure — only needed if modifying infra)
 
 ### 1. Clone and install dependencies
 
 ```bash
 git clone <repo-url>
 cd v0-demo
+```
 
-# Install dependencies for both client and server
+**Install AWS CLI v2:**
+
+```bash
+# macOS
+curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+sudo installer -pkg AWSCLIV2.pkg -target /
+rm AWSCLIV2.pkg
+
+# Windows
+msiexec.exe /i https://awscli.amazonaws.com/AWSCLIV2.msi
+```
+
+**Install Terraform** (only needed if modifying infrastructure):
+
+```bash
+# macOS
+HOMEBREW_NO_AUTO_UPDATE=1 brew install hashicorp/tap/terraform
+
+# Windows — download from https://developer.hashicorp.com/terraform/install
+```
+
+**Configure AWS credentials:**
+
+```bash
+aws configure
+# Enter your Access Key ID, Secret Access Key, and region (ap-southeast-1)
+```
+
+**Install project dependencies:**
+
+```bash
 npm run install:all
 ```
 
@@ -226,6 +259,96 @@ Ensure `~/dev/cs5224/dynamodb-data` exists and is writable. The `dynamodb-local`
 
 **Port conflicts:**
 If ports 5173, 3001, or 8000 are already in use, stop the conflicting services or change the port mappings in `docker-compose.yml`.
+
+## AWS Deployment
+
+The app is deployed to AWS using Terraform for infrastructure and a deploy script for code.
+
+### Architecture
+
+```
+Users → CloudFront (HTTPS) → S3 (static React app)
+              ↓ (/api/*)
+           ALB → ECS Fargate (Express container)
+                      ↓
+                  DynamoDB (managed)
+```
+
+**CloudFront** sits in front of everything as a single entry point:
+- `/*` → serves the React SPA from **S3**
+- `/api/*` and `/health` → proxies to the **ALB**, which routes to the Express container on **ECS Fargate**
+
+This means the frontend and API share the same domain — no CORS issues, no mixed HTTP/HTTPS content.
+
+### Infrastructure (Terraform)
+
+**Modifying infrastructure:**
+
+Only people who need to change AWS resources need Terraform installed. Everyone else just runs the deploy script. See below this section.
+
+
+All infrastructure is defined in `terraform/` and managed via [HCP Terraform](https://app.terraform.io):
+
+| File | What it provisions |
+|------|-------------------|
+| `main.tf` | HCP Terraform backend + AWS provider |
+| `variables.tf` | Configurable inputs (region, app name, CPU/memory) |
+| `outputs.tf` | URLs and resource names used by the deploy script |
+| `network.tf` | VPC, 2 public subnets, internet gateway, security groups, DynamoDB VPC endpoint |
+| `iam.tf` | ECS execution role (pull images) + task role (DynamoDB access) |
+| `dynamodb.tf` | `Subjects` table with on-demand billing |
+| `ecr.tf` | Docker image registry + auto-cleanup of old images |
+| `alb.tf` | Application Load Balancer with health check on `/health` |
+| `ecs.tf` | Fargate cluster, task definition (0.25 vCPU, 512 MB), service with circuit breaker |
+| `s3.tf` | Private S3 bucket for frontend static files |
+| `cloudfront.tf` | CDN with two origins (S3 for frontend, ALB for API) |
+
+**First-time setup:**
+
+1. Create an [HCP Terraform](https://app.terraform.io) account, organization, and workspace
+2. Set `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` as environment variables in the workspace
+3. Update `terraform/main.tf` with your organization and workspace names
+4. Run:
+
+```bash
+cd terraform
+terraform init
+terraform apply
+```
+
+### Deploying Code
+
+After infrastructure is up, deploy with:
+
+```bash
+npm run deploy
+```
+
+This:
+1. Builds the server Docker image (linux/amd64) and pushes to ECR
+2. Triggers ECS to pull the new image
+3. Builds the client inside Docker and uploads static files to S3
+4. Invalidates the CloudFront cache
+
+**Teammates without Terraform** can deploy by setting env vars instead:
+
+```bash
+export ECR_REPO="<ecr-repo-url>"
+export S3_BUCKET="<s3-bucket-name>"
+export CF_DIST_ID="<cloudfront-distribution-id>"
+export ECS_CLUSTER="learnbright-cluster"
+export ECS_SERVICE="learnbright-api"
+npm run deploy
+```
+
+### Production Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run deploy` | Build and deploy both frontend and backend to AWS |
+| `npm run deploy:infra` | Apply Terraform changes (provision/update infrastructure) |
+| `npm run deploy:destroy` | Tear down all AWS infrastructure |
+| `npm run deploy:logs` | Tail live server logs from CloudWatch |
 
 ## Features
 

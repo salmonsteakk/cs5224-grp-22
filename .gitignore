@@ -24,3 +24,11 @@ initial-prompt.txt
 
 .next/
 next-env.d.ts
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+
+# Installers
+AWSCLIV2.pkg
