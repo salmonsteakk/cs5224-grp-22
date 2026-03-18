@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/auth-context";
 import { ProgressProvider } from "./context/progress-context";
 import HomePage from "./pages/HomePage";
 import LearnPage from "./pages/LearnPage";
@@ -13,19 +14,21 @@ import NotFoundPage from "./pages/NotFoundPage";
 export default function App() {
   return (
     <BrowserRouter>
-      <ProgressProvider>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/learn" element={<LearnPage />} />
-          <Route path="/learn/:subjectId" element={<SubjectLearnPage />} />
-          <Route path="/learn/:subjectId/:topicId" element={<TopicLessonPage />} />
-          <Route path="/practice" element={<PracticePage />} />
-          <Route path="/practice/:subjectId" element={<SubjectPracticePage />} />
-          <Route path="/practice/:subjectId/:topicId" element={<TopicQuizPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </ProgressProvider>
+      <AuthProvider>
+        <ProgressProvider>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/learn" element={<LearnPage />} />
+            <Route path="/learn/:subjectId" element={<SubjectLearnPage />} />
+            <Route path="/learn/:subjectId/:topicId" element={<TopicLessonPage />} />
+            <Route path="/practice" element={<PracticePage />} />
+            <Route path="/practice/:subjectId" element={<SubjectPracticePage />} />
+            <Route path="/practice/:subjectId/:topicId" element={<TopicQuizPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </ProgressProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
