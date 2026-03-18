@@ -17,7 +17,6 @@
     "clean": "docker compose down --rmi local --volumes --remove-orphans",
     "deploy:prod": "./scripts/deploy.sh",
     "deploy:infra": "cd terraform && terraform apply",
-    // "deploy:destroy": "cd terraform && terraform destroy",
     "deploy:logs": "aws logs tail /ecs/learnbright --follow --region ap-southeast-1"
   }
 }
