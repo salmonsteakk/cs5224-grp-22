@@ -62,6 +62,12 @@ export const login = (email: string, password: string) =>
     body: { email, password },
   });
 
+export const register = (email: string, password: string, name: string) =>
+  fetchJson<LoginResponse>("/auth/register", {
+    method: "POST",
+    body: { email, password, name },
+  });
+
 export const getCurrentUser = (token: string) =>
   fetchJson<CurrentUserResponse>("/auth/me", {
     token,

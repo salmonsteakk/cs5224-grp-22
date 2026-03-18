@@ -1,18 +1,20 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogIn } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/context/auth-context";
-import { login } from "@/services/api";
+import { register } from "@/services/api";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading, setAuthSession } = useAuth();
 
-  const [email, setEmail] = useState("student@example.com");
-  const [password, setPassword] = useState("Password123!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -25,15 +27,41 @@ export default function LoginPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+
+    // Client-side validation
+    if (!email.trim() || !password || !name.trim()) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      const body = await login(email.trim(), password);
+      const body = await register(email.trim(), password, name.trim());
 
       setAuthSession(body.token, body.user);
       navigate("/", { replace: true });
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Unable to reach the server. Please try again.");
+      const message = error instanceof Error ? error.message : "Unable to reach the server. Please try again.";
+      
+      // Parse backend error messages
+      if (message.includes("409")) {
+        setError("This email is already registered. Please sign in or use a different email.");
+      } else if (message.includes("400")) {
+        setError("Invalid input. Please check your information and try again.");
+      } else {
+        setError(message);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -47,16 +75,31 @@ export default function LoginPage() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-2xl">
-              <LogIn className="h-5 w-5" />
-              Sign in
+              <UserPlus className="h-5 w-5" />
+              Create account
             </CardTitle>
             <CardDescription>
-              Use your email and password to continue.
+              Sign up to start learning today.
             </CardDescription>
           </CardHeader>
 
           <CardContent>
             <form className="space-y-4" onSubmit={handleSubmit}>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium" htmlFor="name">
+                  Full Name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  required
+                  autoComplete="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                />
+              </div>
+
               <div className="space-y-1.5">
                 <label className="text-sm font-medium" htmlFor="email">
                   Email
@@ -80,9 +123,27 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   required
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                />
+                <p className="text-xs text-muted-foreground">
+                  At least 8 characters
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium" htmlFor="confirmPassword">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  required
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                 />
               </div>
@@ -94,14 +155,14 @@ export default function LoginPage() {
               )}
 
               <Button type="submit" className="w-full" disabled={submitting || isLoading}>
-                {submitting ? "Signing in..." : "Sign in"}
+                {submitting ? "Creating account..." : "Create account"}
               </Button>
             </form>
 
             <p className="mt-4 text-center text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <Link to="/signup" className="underline underline-offset-4 hover:text-foreground">
-                Create one
+              Already have an account?{" "}
+              <Link to="/login" className="underline underline-offset-4 hover:text-foreground">
+                Sign in
               </Link>
             </p>
           </CardContent>

@@ -11,6 +11,7 @@ import TopicQuizPage from "./pages/TopicQuizPage";
 import DashboardPage from "./pages/DashboardPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
         <ProgressProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
 
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<HomePage />} />
