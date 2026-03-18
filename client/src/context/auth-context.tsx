@@ -1,12 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-
-interface AuthUser {
-  id: string;
-  email: string;
-  name: string;
-  role: "student";
-  status: "active" | "disabled";
-}
+import type { AuthUser } from "@/types";
+import { getCurrentUser } from "@/services/api";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -19,7 +13,6 @@ interface AuthContextType {
 
 const TOKEN_STORAGE_KEY = "auth-token";
 const USER_STORAGE_KEY = "auth-user";
-const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -49,17 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function restoreSession() {
       try {
-        const response = await fetch(`${API_BASE}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${savedToken}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Session restore failed");
-        }
-
-        const data = (await response.json()) as { user: AuthUser };
+        const data = await getCurrentUser(savedToken as string);
         setUser(data.user);
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
       } catch {

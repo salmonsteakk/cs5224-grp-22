@@ -10,6 +10,8 @@ import SubjectPracticePage from "./pages/SubjectPracticePage";
 import TopicQuizPage from "./pages/TopicQuizPage";
 import DashboardPage from "./pages/DashboardPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import LoginPage from "./pages/LoginPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   return (
@@ -17,14 +19,19 @@ export default function App() {
       <AuthProvider>
         <ProgressProvider>
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/learn" element={<LearnPage />} />
-            <Route path="/learn/:subjectId" element={<SubjectLearnPage />} />
-            <Route path="/learn/:subjectId/:topicId" element={<TopicLessonPage />} />
-            <Route path="/practice" element={<PracticePage />} />
-            <Route path="/practice/:subjectId" element={<SubjectPracticePage />} />
-            <Route path="/practice/:subjectId/:topicId" element={<TopicQuizPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/login" element={<LoginPage />} />
+
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/learn" element={<LearnPage />} />
+              <Route path="/learn/:subjectId" element={<SubjectLearnPage />} />
+              <Route path="/learn/:subjectId/:topicId" element={<TopicLessonPage />} />
+              <Route path="/practice" element={<PracticePage />} />
+              <Route path="/practice/:subjectId" element={<SubjectPracticePage />} />
+              <Route path="/practice/:subjectId/:topicId" element={<TopicQuizPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+            </Route>
+
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </ProgressProvider>
