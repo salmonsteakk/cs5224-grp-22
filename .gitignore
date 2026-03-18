@@ -23,9 +23,14 @@ server/dist
 initial-prompt.txt
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 .next/
 next-env.d.ts
 =======
+=======
+.next/
+next-env.d.ts
+>>>>>>> fe3481247d373e54f7283acf45aa9b79e38fb865
 # Terraform
 .terraform/
 *.tfstate
@@ -34,4 +39,7 @@ next-env.d.ts
 
 # Installers
 AWSCLIV2.pkg
+<<<<<<< HEAD
 >>>>>>> a5a202b9a0db71c45ff23f8f31665eecd9533b6f
+=======
+>>>>>>> fe3481247d373e54f7283acf45aa9b79e38fb865
