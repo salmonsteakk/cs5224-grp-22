@@ -1,4 +1,5 @@
-import * as dynamoose from "dynamoose";
+import _dynamoose from "dynamoose";
+const dynamoose = (_dynamoose as any).default ?? _dynamoose;
 
 const lessonSchema = new dynamoose.Schema({
   id: { type: String, required: true },

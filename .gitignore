@@ -22,5 +22,16 @@ server/dist
 *.claude
 initial-prompt.txt
 
+<<<<<<< HEAD
 .next/
 next-env.d.ts
+=======
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+
+# Installers
+AWSCLIV2.pkg
+>>>>>>> a5a202b9a0db71c45ff23f8f31665eecd9533b6f

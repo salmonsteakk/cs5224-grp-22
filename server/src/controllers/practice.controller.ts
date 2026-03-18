@@ -4,7 +4,7 @@ import { SubjectModel } from "../models/Subject.js";
 export async function getPracticeSubjects(_req: Request, res: Response) {
   try {
     const subjects = await SubjectModel.scan().exec();
-    const result = subjects.map((s) => {
+    const result = subjects.map((s: any) => {
       const obj = s.toJSON();
       return {
         ...obj,
@@ -27,7 +27,7 @@ export async function getPracticeSubjects(_req: Request, res: Response) {
 
 export async function getQuestions(req: Request, res: Response) {
   try {
-    const subject = await SubjectModel.get(req.params.subjectId);
+    const subject = await SubjectModel.get(String(req.params.subjectId));
     if (!subject) {
       res.status(404).json({ error: "Subject not found" });
       return;
