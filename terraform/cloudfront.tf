@@ -90,6 +90,18 @@ resource "aws_cloudfront_distribution" "main" {
     compress                 = true
   }
 
+  # /videos/* → videos
+  ordered_cache_behavior {
+    path_pattern             = "/videos/*"
+    target_origin_id         = "s3-videos"
+    viewer_protocol_policy   = "redirect-to-https"
+    allowed_methods          = ["GET", "HEAD"]
+    cached_methods           = ["GET", "HEAD"]
+    cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
+    compress                 = true
+  }
+
   # SPA routing: return index.html for paths that don't exist in S3
   custom_error_response {
     error_code         = 403
