@@ -49,6 +49,13 @@ resource "aws_cloudfront_distribution" "main" {
     }
   }
 
+  # Origin 3: Videos
+  origin {
+    domain_name              = aws_s3_bucket.videos.bucket_regional_domain_name
+    origin_id                = "s3-videos"
+    origin_access_control_id = aws_cloudfront_origin_access_control.s3.id
+  }
+
   # Default behavior: serve frontend from S3
   default_cache_behavior {
     target_origin_id       = "s3"
