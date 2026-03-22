@@ -32,3 +32,20 @@ export interface Subject {
   color: "math" | "science";
   topics: Topic[];
 }
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  role: "student";
+  status: "active" | "disabled";
+}
+
+export interface LoginResponse {
+  token: string;
+  user: AuthUser;
+}
+
+export interface CurrentUserResponse {
+  user: AuthUser;
+}

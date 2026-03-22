@@ -11,6 +11,8 @@ services:
       - ./client/index.html:/app/index.html
     environment:
       - VITE_API_URL=http://localhost:3001/api
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=100
     depends_on:
       - server
 
@@ -26,6 +28,8 @@ services:
     environment:
       - PORT=3001
       - NODE_ENV=development
+      - JWT_SECRET=dev-jwt-secret
+      - JWT_EXPIRES_IN=1h
       - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
       - AWS_REGION=local
       - AWS_ACCESS_KEY_ID=local

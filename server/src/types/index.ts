@@ -31,3 +31,26 @@ export interface Subject {
   color: "math" | "science";
   topics: Topic[];
 }
+
+export interface User {
+  id: string;
+  email: string;
+  passwordHash: string;
+  name: string;
+  role: "student";
+  status: "active" | "disabled";
+}
+
+export interface AuthTokenPayload {
+  sub: string;
+  email: string;
+  role: User["role"];
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  role: User["role"];
+  status: User["status"];
+}
