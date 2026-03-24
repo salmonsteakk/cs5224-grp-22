@@ -52,7 +52,9 @@ resource "aws_iam_role_policy" "ecs_task_dynamodb" {
       ]
       Resource = [
         aws_dynamodb_table.subjects.arn,
-        "${aws_dynamodb_table.subjects.arn}/index/*"
+        "${aws_dynamodb_table.subjects.arn}/index/*",
+        aws_dynamodb_table.users.arn,
+        "${aws_dynamodb_table.users.arn}/index/*"
       ]
     }]
   })
