@@ -49,3 +49,80 @@ export interface LoginResponse {
 export interface CurrentUserResponse {
   user: AuthUser;
 }
+
+export interface LessonProgress {
+  completed: boolean;
+  watchedAt?: string;
+}
+
+export interface QuizQuestionResponse {
+  questionId: string;
+  selectedIndex: number;
+  correct: boolean;
+}
+
+export interface QuizCompletionResult {
+  score: number;
+  totalQuestions: number;
+  responses: QuizQuestionResponse[];
+}
+
+export interface QuizAttempt {
+  score: number;
+  totalQuestions: number;
+  attemptedAt: string;
+  responses?: QuizQuestionResponse[];
+  attemptId?: string;
+}
+
+export interface TopicProgress {
+  lessons: Record<string, LessonProgress>;
+  quizAttempts: QuizAttempt[];
+  bestScore: number;
+  quizAttemptCount?: number;
+  quizScoreSum?: number;
+  quizQuestionSum?: number;
+}
+
+export interface SubjectProgress {
+  topics: Record<string, TopicProgress>;
+}
+
+export interface StudentProgress {
+  subjects: Record<string, SubjectProgress>;
+  totalPoints: number;
+  level: number;
+  achievements: string[];
+}
+
+export interface ProgressProfileDto {
+  userId: string;
+  totalPoints: number;
+  level: number;
+  achievements: string[];
+  updatedAt: string;
+}
+
+export interface TopicProgressRowDto {
+  userId: string;
+  topicKey: string;
+  subjectId: string;
+  topicId: string;
+  lessons: Record<string, { completed: boolean; watchedAt?: string }>;
+  bestScore: number;
+  quizAttemptCount: number;
+  quizScoreSum?: number;
+  quizQuestionSum?: number;
+  updatedAt: string;
+}
+
+export interface TopicQuizAttemptDto {
+  attemptId: string;
+  userId: string;
+  subjectId: string;
+  topicId: string;
+  submittedAt: string;
+  score: number;
+  totalQuestions: number;
+  responses: QuizQuestionResponse[];
+}

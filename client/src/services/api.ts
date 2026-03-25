@@ -3,6 +3,9 @@ import type {
   Question,
   LoginResponse,
   CurrentUserResponse,
+  ProgressProfileDto,
+  TopicProgressRowDto,
+  TopicQuizAttemptDto,
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -72,3 +75,61 @@ export const getCurrentUser = (token: string) =>
   fetchJson<CurrentUserResponse>("/auth/me", {
     token,
   });
+
+export const getProgressProfile = (token: string) =>
+  fetchJson<ProgressProfileDto>("/progress/profile", { token });
+
+export const putProgressProfile = (
+  token: string,
+  body: { totalPoints: number; level: number; achievements: string[] }
+) =>
+  fetchJson<ProgressProfileDto>("/progress/profile", {
+    method: "PUT",
+    body,
+    token,
+  });
+
+export const getProgressTopics = (token: string) =>
+  fetchJson<{ topics: TopicProgressRowDto[] }>("/progress/topics", { token });
+
+export const putTopicProgress = (
+  token: string,
+  subjectId: string,
+  topicId: string,
+  body: {
+    lessons?: Record<string, { completed: boolean; watchedAt?: string }>;
+    bestScore?: number;
+  }
+) =>
+  fetchJson<TopicProgressRowDto>(`/progress/topics/${subjectId}/${topicId}`, {
+    method: "PUT",
+    body,
+    token,
+  });
+
+export const postQuizAttempt = (
+  token: string,
+  body: {
+    subjectId: string;
+    topicId: string;
+    score: number;
+    totalQuestions: number;
+    responses: Array<{ questionId: string; selectedIndex: number; correct: boolean }>;
+  }
+) =>
+  fetchJson<TopicQuizAttemptDto>("/progress/quiz-attempts", {
+    method: "POST",
+    body,
+    token,
+  });
+
+export const listTopicQuizAttempts = (token: string, subjectId: string, topicId: string) => {
+  const q = new URLSearchParams({ subjectId, topicId });
+  return fetchJson<{ attempts: TopicQuizAttemptDto[] }>(
+    `/progress/quiz-attempts?${q.toString()}`,
+    { token }
+  );
+};
+
+export const getTopicQuizAttempt = (token: string, attemptId: string) =>
+  fetchJson<TopicQuizAttemptDto>(`/progress/quiz-attempts/${attemptId}`, { token });

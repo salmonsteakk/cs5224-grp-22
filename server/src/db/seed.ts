@@ -75,9 +75,111 @@ async function ensureUsersTable(): Promise<void> {
   }
 }
 
+async function ensureUserProgressProfileTable(): Promise<void> {
+  const ddb = dynamoose.aws.ddb();
+  try {
+    await ddb.describeTable({ TableName: "UserProgressProfile" });
+  } catch (error: unknown) {
+    if ((error as { name?: string }).name === "ResourceNotFoundException") {
+      await ddb.createTable({
+        TableName: "UserProgressProfile",
+        KeySchema: [{ AttributeName: "userId", KeyType: "HASH" }],
+        AttributeDefinitions: [{ AttributeName: "userId", AttributeType: "S" }],
+        BillingMode: "PAY_PER_REQUEST",
+      });
+      let active = false;
+      while (!active) {
+        const desc = await ddb.describeTable({ TableName: "UserProgressProfile" });
+        active = desc.Table?.TableStatus === "ACTIVE";
+        if (!active) await new Promise((r) => setTimeout(r, 500));
+      }
+      console.log("Created UserProgressProfile table.");
+    } else {
+      throw error;
+    }
+  }
+}
+
+async function ensureUserTopicProgressTable(): Promise<void> {
+  const ddb = dynamoose.aws.ddb();
+  try {
+    await ddb.describeTable({ TableName: "UserTopicProgress" });
+  } catch (error: unknown) {
+    if ((error as { name?: string }).name === "ResourceNotFoundException") {
+      await ddb.createTable({
+        TableName: "UserTopicProgress",
+        KeySchema: [
+          { AttributeName: "userId", KeyType: "HASH" },
+          { AttributeName: "topicKey", KeyType: "RANGE" },
+        ],
+        AttributeDefinitions: [
+          { AttributeName: "userId", AttributeType: "S" },
+          { AttributeName: "topicKey", AttributeType: "S" },
+        ],
+        BillingMode: "PAY_PER_REQUEST",
+      });
+      let active = false;
+      while (!active) {
+        const desc = await ddb.describeTable({ TableName: "UserTopicProgress" });
+        active = desc.Table?.TableStatus === "ACTIVE";
+        if (!active) await new Promise((r) => setTimeout(r, 500));
+      }
+      console.log("Created UserTopicProgress table.");
+    } else {
+      throw error;
+    }
+  }
+}
+
+async function ensureTopicQuizAttemptsTable(): Promise<void> {
+  const ddb = dynamoose.aws.ddb();
+  try {
+    await ddb.describeTable({ TableName: "TopicQuizAttempts" });
+  } catch (error: unknown) {
+    if ((error as { name?: string }).name === "ResourceNotFoundException") {
+      await ddb.createTable({
+        TableName: "TopicQuizAttempts",
+        KeySchema: [
+          { AttributeName: "userId", KeyType: "HASH" },
+          { AttributeName: "attemptId", KeyType: "RANGE" },
+        ],
+        AttributeDefinitions: [
+          { AttributeName: "userId", AttributeType: "S" },
+          { AttributeName: "attemptId", AttributeType: "S" },
+          { AttributeName: "userTopicKey", AttributeType: "S" },
+          { AttributeName: "submittedAt", AttributeType: "S" },
+        ],
+        GlobalSecondaryIndexes: [
+          {
+            IndexName: "UserTopicIndex",
+            KeySchema: [
+              { AttributeName: "userTopicKey", KeyType: "HASH" },
+              { AttributeName: "submittedAt", KeyType: "RANGE" },
+            ],
+            Projection: { ProjectionType: "ALL" },
+          },
+        ],
+        BillingMode: "PAY_PER_REQUEST",
+      });
+      let active = false;
+      while (!active) {
+        const desc = await ddb.describeTable({ TableName: "TopicQuizAttempts" });
+        active = desc.Table?.TableStatus === "ACTIVE";
+        if (!active) await new Promise((r) => setTimeout(r, 500));
+      }
+      console.log("Created TopicQuizAttempts table.");
+    } else {
+      throw error;
+    }
+  }
+}
+
 export async function seedDatabase(): Promise<void> {
   await ensureSubjectsTable();
   await ensureUsersTable();
+  await ensureUserProgressProfileTable();
+  await ensureUserTopicProgressTable();
+  await ensureTopicQuizAttemptsTable();
 
   try {
     const existingSubject = await SubjectModel.get("math");
