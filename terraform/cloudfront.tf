@@ -49,6 +49,13 @@ resource "aws_cloudfront_distribution" "main" {
     }
   }
 
+  # Origin 3: Videos
+  origin {
+    domain_name              = aws_s3_bucket.videos.bucket_regional_domain_name
+    origin_id                = "s3-videos"
+    origin_access_control_id = aws_cloudfront_origin_access_control.s3.id
+  }
+
   # Default behavior: serve frontend from S3
   default_cache_behavior {
     target_origin_id       = "s3"
@@ -75,6 +82,18 @@ resource "aws_cloudfront_distribution" "main" {
   ordered_cache_behavior {
     path_pattern             = "/health"
     target_origin_id         = "alb"
+    viewer_protocol_policy   = "redirect-to-https"
+    allowed_methods          = ["GET", "HEAD"]
+    cached_methods           = ["GET", "HEAD"]
+    cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
+    compress                 = true
+  }
+
+  # /videos/* → videos
+  ordered_cache_behavior {
+    path_pattern             = "/videos/*"
+    target_origin_id         = "s3-videos"
     viewer_protocol_policy   = "redirect-to-https"
     allowed_methods          = ["GET", "HEAD"]
     cached_methods           = ["GET", "HEAD"]

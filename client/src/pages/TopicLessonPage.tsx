@@ -67,6 +67,8 @@ export default function TopicLessonPage() {
             <VideoPlayer
               lesson={currentLesson}
               subjectColor={subject.color}
+              subjectId={subjectId}
+              topicId={topicId}
               onComplete={handleLessonComplete}
               isCompleted={lessonProgress.completed}
             />
