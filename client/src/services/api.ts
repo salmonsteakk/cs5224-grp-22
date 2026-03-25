@@ -6,6 +6,9 @@ import type {
   ProgressProfileDto,
   TopicProgressRowDto,
   TopicQuizAttemptDto,
+  ExamPaperSummaryDto,
+  ExamPaperDetailDto,
+  ExamAttemptDto,
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -133,3 +136,36 @@ export const listTopicQuizAttempts = (token: string, subjectId: string, topicId:
 
 export const getTopicQuizAttempt = (token: string, attemptId: string) =>
   fetchJson<TopicQuizAttemptDto>(`/progress/quiz-attempts/${attemptId}`, { token });
+
+export const getExamPapers = (subjectId?: string) => {
+  const q = subjectId ? `?subjectId=${encodeURIComponent(subjectId)}` : "";
+  return fetchJson<{ papers: ExamPaperSummaryDto[] }>(`/exams/papers${q}`);
+};
+
+export const getExamPaper = (paperId: string) =>
+  fetchJson<ExamPaperDetailDto>(`/exams/papers/${encodeURIComponent(paperId)}`);
+
+export const submitExamAttempt = (
+  token: string,
+  body: {
+    examPaperId: string;
+    score: number;
+    totalQuestions: number;
+    responses: Array<{ questionId: string; selectedIndex: number; correct: boolean }>;
+  }
+) =>
+  fetchJson<ExamAttemptDto>("/exams/attempts", {
+    method: "POST",
+    body,
+    token,
+  });
+
+export const listExamAttempts = (token: string, examPaperId: string) => {
+  const q = new URLSearchParams({ examPaperId });
+  return fetchJson<{ attempts: ExamAttemptDto[] }>(`/exams/attempts?${q.toString()}`, {
+    token,
+  });
+};
+
+export const getExamAttempt = (token: string, attemptId: string) =>
+  fetchJson<ExamAttemptDto>(`/exams/attempts/${encodeURIComponent(attemptId)}`, { token });
