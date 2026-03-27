@@ -75,9 +75,48 @@ async function ensureUsersTable(): Promise<void> {
   }
 }
 
+async function ensureAnalyticsEventsTable(): Promise<void> {
+  const ddb = dynamoose.aws.ddb();
+
+  try {
+    await ddb.describeTable({ TableName: "AnalyticsEvents" });
+  } catch (error: unknown) {
+    if ((error as { name?: string }).name === "ResourceNotFoundException") {
+      await ddb.createTable({
+        TableName: "AnalyticsEvents",
+        KeySchema: [{ AttributeName: "id", KeyType: "HASH" }],
+        AttributeDefinitions: [
+          { AttributeName: "id", AttributeType: "S" },
+          { AttributeName: "userId", AttributeType: "S" },
+        ],
+        GlobalSecondaryIndexes: [
+          {
+            IndexName: "userIdIndex",
+            KeySchema: [{ AttributeName: "userId", KeyType: "HASH" }],
+            Projection: { ProjectionType: "ALL" },
+          },
+        ],
+        BillingMode: "PAY_PER_REQUEST",
+      });
+
+      let active = false;
+      while (!active) {
+        const desc = await ddb.describeTable({ TableName: "AnalyticsEvents" });
+        active = desc.Table?.TableStatus === "ACTIVE";
+        if (!active) await new Promise((r) => setTimeout(r, 500));
+      }
+
+      console.log("Created AnalyticsEvents table.");
+    } else {
+      throw error;
+    }
+  }
+}
+
 export async function seedDatabase(): Promise<void> {
   await ensureSubjectsTable();
   await ensureUsersTable();
+  await ensureAnalyticsEventsTable();
 
   try {
     const existingSubject = await SubjectModel.get("math");

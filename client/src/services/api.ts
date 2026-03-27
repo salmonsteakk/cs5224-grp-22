@@ -3,6 +3,8 @@ import type {
   Question,
   LoginResponse,
   CurrentUserResponse,
+  AnalyticsEventPayload,
+  DashboardAnalyticsSummary,
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -11,6 +13,7 @@ interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   token?: string;
+  keepalive?: boolean;
 }
 
 async function fetchJson<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -26,6 +29,7 @@ async function fetchJson<T>(path: string, options: RequestOptions = {}): Promise
     method: options.method || "GET",
     headers,
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    keepalive: options.keepalive ?? false,
   });
 
   if (!response.ok) {
@@ -70,5 +74,25 @@ export const register = (email: string, password: string, name: string) =>
 
 export const getCurrentUser = (token: string) =>
   fetchJson<CurrentUserResponse>("/auth/me", {
+    token,
+  });
+
+export const trackAnalyticsEvent = (token: string, payload: AnalyticsEventPayload) =>
+  fetchJson<{ ok: boolean }>("/analytics/events", {
+    method: "POST",
+    token,
+    body: payload,
+  });
+
+export const trackAnalyticsEventReliable = (token: string, payload: AnalyticsEventPayload) =>
+  fetchJson<{ ok: boolean }>("/analytics/events", {
+    method: "POST",
+    token,
+    body: payload,
+    keepalive: true,
+  });
+
+export const getDashboardAnalyticsSummary = (token: string) =>
+  fetchJson<DashboardAnalyticsSummary>("/analytics/dashboard-summary", {
     token,
   });

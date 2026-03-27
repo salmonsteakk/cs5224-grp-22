@@ -6,13 +6,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Navigation } from "@/components/Navigation";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { useProgress } from "@/context/progress-context";
+import { useAuth } from "@/context/auth-context";
 import { getLearnSubject } from "@/services/api";
+import { fireAndForgetAnalytics, fireAndForgetCriticalAnalytics } from "@/services/analytics";
 import type { Subject } from "@/types";
 
 export default function TopicLessonPage() {
   const { subjectId, topicId } = useParams<{ subjectId: string; topicId: string }>();
   const navigate = useNavigate();
   const { getLessonProgress, markLessonComplete } = useProgress();
+  const { token } = useAuth();
   const [subject, setSubject] = useState<Subject | null>(null);
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
 
@@ -33,10 +36,28 @@ export default function TopicLessonPage() {
 
   const currentLesson = topic?.lessons[currentLessonIndex];
 
-  const handleLessonComplete = useCallback(() => {
+  const handleLessonComplete = useCallback((durationSeconds: number) => {
     if (!subjectId || !topicId || !currentLesson) return;
     markLessonComplete(subjectId, topicId, currentLesson.id);
-  }, [subjectId, topicId, currentLesson, markLessonComplete]);
+    fireAndForgetCriticalAnalytics(token, {
+      eventType: "lesson_complete",
+      subjectId,
+      topicId,
+      lessonId: currentLesson.id,
+      durationSeconds,
+      pointsEarned: 10,
+    });
+  }, [subjectId, topicId, currentLesson, markLessonComplete, token]);
+
+  useEffect(() => {
+    if (!subjectId || !topicId || !currentLesson) return;
+    fireAndForgetAnalytics(token, {
+      eventType: "lesson_start",
+      subjectId,
+      topicId,
+      lessonId: currentLesson.id,
+    });
+  }, [subjectId, topicId, currentLesson?.id, token]);
 
   if (!subject || !topic || !currentLesson) return null;
 

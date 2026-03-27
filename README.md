@@ -357,3 +357,44 @@ npm run deploy
 - **Dashboard:** Track total points, level progression, lessons completed, quiz accuracy, and 6 unlockable achievements
 - **Progress:** Stored in browser localStorage (points, levels, achievements, per-lesson and per-quiz tracking)
 - **Responsive:** Mobile hamburger menu, responsive grid layouts
+
+## Student Dashboard Analytics (Section 3)
+
+The dashboard now includes student-centric analytics and a backend event pipeline:
+
+- **KPI cards:** 7-day accuracy, lessons completed, current streak, and time spent (7 days)
+- **Trends:** 7-day daily accuracy trend and points earned this week vs last week
+- **Diagnostics:** weak topics (mastery + accuracy) and next-best-action recommendation
+- **Progress:** subject completion bars plus existing level progression and achievements
+
+### Event instrumentation
+
+Authenticated analytics events are tracked to `POST /api/analytics/events` and summarized by `GET /api/analytics/dashboard-summary`.
+
+Event types:
+
+- `lesson_start`
+- `lesson_complete`
+- `quiz_start`
+- `question_answered`
+- `quiz_complete`
+- `dashboard_view`
+
+Key properties include:
+
+- user and content identifiers (`userId`, `subjectId`, `topicId`, `lessonId`, `questionId`)
+- scoring fields (`isCorrect`, `score`, `totalQuestions`, `attemptNumber`)
+- engagement fields (`durationSeconds`, `pointsEarned`)
+- event timestamp (`createdAt`)
+
+### Rollout phases and acceptance criteria
+
+- **Phase 1 (fast):** dashboard UI surfaces KPI/trend/weak-topic cards from available data
+- **Phase 2 (reliable):** backend ingestion + persistence (`AnalyticsEvents`) supports cross-device and time-series analytics
+- **Phase 3 (smart):** recommendation logic prioritizes weakest topic for guided next steps
+
+Acceptance criteria:
+
+- Student can identify weakest topic in under 10 seconds
+- Student can compare week-over-week progress (accuracy, time spent, points)
+- Recommendation card updates based on tracked learning/quiz behavior

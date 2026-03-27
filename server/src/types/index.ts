@@ -54,3 +54,28 @@ export interface AuthUser {
   role: User["role"];
   status: User["status"];
 }
+
+export type AnalyticsEventType =
+  | "lesson_start"
+  | "lesson_complete"
+  | "quiz_start"
+  | "question_answered"
+  | "quiz_complete"
+  | "dashboard_view";
+
+export interface AnalyticsEvent {
+  id: string;
+  userId: string;
+  eventType: AnalyticsEventType;
+  subjectId?: string;
+  topicId?: string;
+  lessonId?: string;
+  questionId?: string;
+  isCorrect?: boolean;
+  score?: number;
+  totalQuestions?: number;
+  attemptNumber?: number;
+  durationSeconds?: number;
+  pointsEarned?: number;
+  createdAt: string;
+}

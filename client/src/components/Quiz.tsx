@@ -9,9 +9,25 @@ interface QuizProps {
   questions: Question[];
   subjectColor: "math" | "science";
   onComplete: (score: number, total: number) => void;
+  onQuizStart?: () => void;
+  onQuestionAnswered?: (data: {
+    questionId: string;
+    questionIndex: number;
+    isCorrect: boolean;
+    selectedAnswer: number;
+    correctAnswer: number;
+  }) => void;
+  onQuizComplete?: (data: { score: number; total: number; durationSeconds: number }) => void;
 }
 
-export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
+export function Quiz({
+  questions,
+  subjectColor,
+  onComplete,
+  onQuizStart,
+  onQuestionAnswered,
+  onQuizComplete,
+}: QuizProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -20,6 +36,7 @@ export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
   const [answeredQuestions, setAnsweredQuestions] = useState<boolean[]>(
     new Array(questions.length).fill(false)
   );
+  const [startedAt, setStartedAt] = useState<number>(Date.now());
 
   const isMath = subjectColor === "math";
   const accentColor = isMath ? "bg-blue-500" : "bg-emerald-500";
@@ -42,9 +59,18 @@ export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
     newAnswered[currentIndex] = true;
     setAnsweredQuestions(newAnswered);
 
-    if (selectedAnswer === currentQuestion.correctAnswer) {
+    const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+    if (isCorrect) {
       setScore((prev) => prev + 1);
     }
+
+    onQuestionAnswered?.({
+      questionId: currentQuestion.id,
+      questionIndex: currentIndex,
+      isCorrect,
+      selectedAnswer,
+      correctAnswer: currentQuestion.correctAnswer,
+    });
   };
 
   const handleNext = () => {
@@ -64,13 +90,22 @@ export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
     setScore(0);
     setIsQuizComplete(false);
     setAnsweredQuestions(new Array(questions.length).fill(false));
+    setStartedAt(Date.now());
+    onQuizStart?.();
   };
 
   useEffect(() => {
-    if (isQuizComplete) {
+    if (isQuizComplete && questions.length > 0) {
+      const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
+      onQuizComplete?.({ score, total: questions.length, durationSeconds });
       onComplete(score, questions.length);
     }
-  }, [isQuizComplete, score, questions.length, onComplete]);
+  }, [isQuizComplete, score, questions.length, onComplete, onQuizComplete, startedAt]);
+
+  useEffect(() => {
+    onQuizStart?.();
+    setStartedAt(Date.now());
+  }, [onQuizStart]);
 
   const getScoreMessage = () => {
     const percentage = (score / questions.length) * 100;

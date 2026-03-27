@@ -8,7 +8,7 @@ import type { Lesson } from "@/types";
 interface VideoPlayerProps {
   lesson: Lesson;
   subjectColor: "math" | "science";
-  onComplete: () => void;
+  onComplete: (durationSeconds: number) => void;
   isCompleted: boolean;
   subjectId?: string;
   topicId?: string;
@@ -63,7 +63,7 @@ export function VideoPlayer({ lesson, subjectColor, onComplete, isCompleted, sub
         setProgress((prev) => {
           const increment = (100 / totalSeconds) * 0.5;
           const newProgress = Math.min(prev + increment, 100);
-          if (newProgress >= 100 && !isCompleted) onComplete();
+          if (newProgress >= 100 && !isCompleted) onComplete(totalSeconds);
           return newProgress;
         });
       }, 500);
@@ -137,7 +137,7 @@ export function VideoPlayer({ lesson, subjectColor, onComplete, isCompleted, sub
   const handleVideoEnded = () => {
     setProgress(100);
     setIsPlaying(false);
-    if (!isCompleted) onComplete();
+    if (!isCompleted) onComplete(totalSeconds);
   };
 
   const handleVideoError = () => {

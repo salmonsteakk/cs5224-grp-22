@@ -5,13 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/Navigation";
 import { Quiz } from "@/components/Quiz";
 import { useProgress } from "@/context/progress-context";
+import { useAuth } from "@/context/auth-context";
 import { getLearnSubject, getQuestions } from "@/services/api";
+import { fireAndForgetAnalytics, fireAndForgetCriticalAnalytics } from "@/services/analytics";
 import type { Subject, Question } from "@/types";
 
 export default function TopicQuizPage() {
   const { subjectId, topicId } = useParams<{ subjectId: string; topicId: string }>();
   const navigate = useNavigate();
   const { recordQuizAttempt } = useProgress();
+  const { token } = useAuth();
   const [subject, setSubject] = useState<Subject | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
 
@@ -33,6 +36,48 @@ export default function TopicQuizPage() {
     if (!subjectId || !topicId) return;
     recordQuizAttempt(subjectId, topicId, score, total);
   }, [subjectId, topicId, recordQuizAttempt]);
+
+  const handleQuizStart = useCallback(() => {
+    if (!subjectId || !topicId) return;
+    fireAndForgetAnalytics(token, {
+      eventType: "quiz_start",
+      subjectId,
+      topicId,
+    });
+  }, [subjectId, topicId, token]);
+
+  const handleQuestionAnswered = useCallback((data: {
+    questionId: string;
+    questionIndex: number;
+    isCorrect: boolean;
+  }) => {
+    if (!subjectId || !topicId) return;
+    fireAndForgetCriticalAnalytics(token, {
+      eventType: "question_answered",
+      subjectId,
+      topicId,
+      questionId: data.questionId,
+      isCorrect: data.isCorrect,
+      attemptNumber: data.questionIndex + 1,
+    });
+  }, [subjectId, topicId, token]);
+
+  const handleQuizCompleteAnalytics = useCallback((data: {
+    score: number;
+    total: number;
+    durationSeconds: number;
+  }) => {
+    if (!subjectId || !topicId) return;
+    fireAndForgetCriticalAnalytics(token, {
+      eventType: "quiz_complete",
+      subjectId,
+      topicId,
+      score: data.score,
+      totalQuestions: data.total,
+      durationSeconds: data.durationSeconds,
+      pointsEarned: data.score * 5,
+    });
+  }, [subjectId, topicId, token]);
 
   if (!subject || questions.length === 0) return null;
 
@@ -79,6 +124,9 @@ export default function TopicQuizPage() {
           questions={questions}
           subjectColor={subject.color}
           onComplete={handleQuizComplete}
+          onQuizStart={handleQuizStart}
+          onQuestionAnswered={handleQuestionAnswered}
+          onQuizComplete={handleQuizCompleteAnalytics}
         />
       </main>
     </div>
