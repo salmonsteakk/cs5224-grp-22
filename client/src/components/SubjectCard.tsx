@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Calculator, Microscope, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { Subject } from "@/types";
+import type { Subject, SubjectCardStats } from "@/types";
 
 const iconMap = {
   Calculator: Calculator,
@@ -12,12 +12,7 @@ const iconMap = {
 interface SubjectCardProps {
   subject: Subject;
   mode: "learn" | "practice";
-  stats?: {
-    lessonsCompleted?: number;
-    totalLessons?: number;
-    quizzesTaken?: number;
-    averageScore?: number;
-  };
+  stats?: SubjectCardStats;
 }
 
 export function SubjectCard({ subject, mode, stats }: SubjectCardProps) {

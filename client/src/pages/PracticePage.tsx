@@ -2,17 +2,27 @@ import { useEffect, useState } from "react";
 import { Dumbbell } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { SubjectCard } from "@/components/SubjectCard";
-import { useProgress } from "@/context/progress-context";
-import { getPracticeSubjects } from "@/services/api";
-import type { Subject } from "@/types";
+import { useAuth } from "@/context/auth-context";
+import { getDashboardAnalyticsSummary, getPracticeSubjects } from "@/services/api";
+import type { DashboardAnalyticsSummary, Subject, SubjectCardStats } from "@/types";
 
 export default function PracticePage() {
-  const { getSubjectStats } = useProgress();
+  const { token } = useAuth();
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [analytics, setAnalytics] = useState<DashboardAnalyticsSummary | null>(null);
 
   useEffect(() => {
     getPracticeSubjects().then(setSubjects).catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    getDashboardAnalyticsSummary(token).then(setAnalytics).catch(console.error);
+  }, [token]);
+
+  const quizStatsMap = new Map(
+    (analytics?.subjectQuizStats || []).map((row) => [row.subjectId, row])
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -35,7 +45,11 @@ export default function PracticePage() {
 
         <div className="grid gap-6 md:grid-cols-2">
           {subjects.map((subject) => {
-            const stats = getSubjectStats(subject.id);
+            const quizStats = quizStatsMap.get(subject.id);
+            const stats: SubjectCardStats = {
+              quizzesTaken: quizStats?.quizzesTaken ?? 0,
+              averageScore: quizStats?.averageScore ?? 0,
+            };
             return (
               <SubjectCard
                 key={subject.id}

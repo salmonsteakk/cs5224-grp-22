@@ -111,3 +111,10 @@ export interface DashboardAnalyticsSummary {
   }>;
   nextBestAction: string;
 }
+
+export interface SubjectCardStats {
+  lessonsCompleted?: number;
+  totalLessons?: number;
+  quizzesTaken?: number;
+  averageScore?: number;
+}

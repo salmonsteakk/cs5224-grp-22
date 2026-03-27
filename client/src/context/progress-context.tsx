@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { useAuth } from "./auth-context";
 
 interface LessonProgress {
   completed: boolean;
@@ -63,30 +64,53 @@ const defaultProgress: StudentProgress = {
   level: 1,
   achievements: [],
 };
+const LEGACY_PROGRESS_STORAGE_KEY = "student-progress";
+
+function getProgressStorageKey(userId: string | undefined): string {
+  return userId ? `${LEGACY_PROGRESS_STORAGE_KEY}:${userId}` : LEGACY_PROGRESS_STORAGE_KEY;
+}
 
 const ProgressContext = createContext<ProgressContextType | undefined>(undefined);
 
 export function ProgressProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const [progress, setProgress] = useState<StudentProgress>(defaultProgress);
   const [isLoaded, setIsLoaded] = useState(false);
+  const progressStorageKey = getProgressStorageKey(user?.id);
 
   useEffect(() => {
-    const saved = localStorage.getItem("student-progress");
+    setIsLoaded(false);
+    const saved = localStorage.getItem(progressStorageKey);
     if (saved) {
       try {
         setProgress(JSON.parse(saved));
       } catch {
         setProgress(defaultProgress);
       }
+      setIsLoaded(true);
+      return;
+    }
+
+    const legacy = localStorage.getItem(LEGACY_PROGRESS_STORAGE_KEY);
+    if (legacy) {
+      try {
+        const parsed = JSON.parse(legacy) as StudentProgress;
+        setProgress(parsed);
+        localStorage.setItem(progressStorageKey, JSON.stringify(parsed));
+      } catch {
+        setProgress(defaultProgress);
+      }
+    } else {
+      setProgress(defaultProgress);
     }
     setIsLoaded(true);
-  }, []);
+  }, [progressStorageKey]);
 
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem("student-progress", JSON.stringify(progress));
+      localStorage.setItem(progressStorageKey, JSON.stringify(progress));
     }
-  }, [progress, isLoaded]);
+  }, [progress, isLoaded, progressStorageKey]);
 
   const getTopicProgress = useCallback(
     (subjectId: string, topicId: string): TopicProgress => {

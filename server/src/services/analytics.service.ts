@@ -83,6 +83,10 @@ export async function getDashboardAnalytics(userId: string): Promise<DashboardAn
   const cutoff14d = now - 14 * DAY_MS;
   const answeredEvents = events.filter((event) => event.eventType === "question_answered");
   const answered7d = answeredEvents.filter((event) => new Date(event.createdAt).getTime() >= cutoff7d);
+  const quizCompleteEvents = events.filter((event) => event.eventType === "quiz_complete");
+  const quizCompleted7d = quizCompleteEvents.filter(
+    (event) => new Date(event.createdAt).getTime() >= cutoff7d
+  );
 
   const lessonsCompletedSet = new Set(
     events
@@ -131,6 +135,15 @@ export async function getDashboardAnalytics(userId: string): Promise<DashboardAn
     current.total += 1;
     if (event.isCorrect) current.correct += 1;
   });
+  quizCompleted7d.forEach((event) => {
+    const key = event.createdAt.slice(0, 10);
+    const current = trendMap.get(key);
+    if (!current) return;
+    if (current.total > 0) return;
+    if (typeof event.score !== "number" || typeof event.totalQuestions !== "number") return;
+    current.correct += event.score;
+    current.total += event.totalQuestions;
+  });
   const accuracy7dTrend: DailyAccuracyPoint[] = Array.from(trendMap.entries()).map(([label, v]) => ({
     label: label.slice(5),
     accuracy: safePercent(v.correct, v.total),
@@ -170,9 +183,7 @@ export async function getDashboardAnalytics(userId: string): Promise<DashboardAn
   });
 
   const quizStatsBySubject = new Map<string, { score: number; total: number; quizzes: number }>();
-  events
-    .filter((event) => event.eventType === "quiz_complete")
-    .forEach((event) => {
+  quizCompleteEvents.forEach((event) => {
       if (!event.subjectId) return;
       if (typeof event.score !== "number" || typeof event.totalQuestions !== "number") return;
       const current = quizStatsBySubject.get(event.subjectId) || { score: 0, total: 0, quizzes: 0 };
@@ -241,12 +252,18 @@ export async function getDashboardAnalytics(userId: string): Promise<DashboardAn
     ? `Review ${weakestTopic.topicTitle} lessons, then retry the ${weakestTopic.topicTitle} quiz.`
     : "Complete a lesson, then take a quiz to unlock personalized recommendations.";
 
+  const accuracyFromQuestions7d = safePercent(
+    answered7d.filter((event) => event.isCorrect).length,
+    answered7d.length
+  );
+  const accuracyFromQuizSummary7d = safePercent(
+    quizCompleted7d.reduce((acc, event) => acc + (event.score || 0), 0),
+    quizCompleted7d.reduce((acc, event) => acc + (event.totalQuestions || 0), 0)
+  );
+
   return {
     kpis: {
-      accuracy7d: safePercent(
-        answered7d.filter((event) => event.isCorrect).length,
-        answered7d.length
-      ),
+      accuracy7d: answered7d.length > 0 ? accuracyFromQuestions7d : accuracyFromQuizSummary7d,
       lessonsCompleted: lessonsCompletedSet.size,
       streakDays,
       timeSpentMinutes7d,
