@@ -59,6 +59,10 @@ resource "aws_iam_role_policy" "ecs_task_dynamodb" {
         "${aws_dynamodb_table.user_topic_progress.arn}/index/*",
         aws_dynamodb_table.topic_quiz_attempts.arn,
         "${aws_dynamodb_table.topic_quiz_attempts.arn}/index/*",
+        aws_dynamodb_table.exam_papers.arn,
+        "${aws_dynamodb_table.exam_papers.arn}/index/*",
+        aws_dynamodb_table.exam_attempts.arn,
+        "${aws_dynamodb_table.exam_attempts.arn}/index/*",
       ]
     }]
   })

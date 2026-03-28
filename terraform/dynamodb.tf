@@ -78,3 +78,64 @@ resource "aws_dynamodb_table" "topic_quiz_attempts" {
 
   tags = { Name = "${var.app_name}-topic-quiz-attempts" }
 }
+
+resource "aws_dynamodb_table" "exam_papers" {
+  name         = "ExamPapers"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "paperId"
+
+  attribute {
+    name = "paperId"
+    type = "S"
+  }
+
+  attribute {
+    name = "subjectId"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "SubjectPapersIndex"
+    hash_key        = "subjectId"
+    range_key       = "paperId"
+    projection_type = "ALL"
+  }
+
+  tags = { Name = "${var.app_name}-exam-papers" }
+}
+
+resource "aws_dynamodb_table" "exam_attempts" {
+  name         = "ExamAttempts"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "userId"
+  range_key    = "attemptId"
+
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+
+  attribute {
+    name = "attemptId"
+    type = "S"
+  }
+
+  attribute {
+    name = "userExamKey"
+    type = "S"
+  }
+
+  attribute {
+    name = "submittedAt"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "UserExamIndex"
+    hash_key        = "userExamKey"
+    range_key       = "submittedAt"
+    projection_type = "ALL"
+  }
+
+  tags = { Name = "${var.app_name}-exam-attempts" }
+}

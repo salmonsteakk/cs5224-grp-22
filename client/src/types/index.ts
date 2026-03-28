@@ -126,3 +126,30 @@ export interface TopicQuizAttemptDto {
   totalQuestions: number;
   responses: QuizQuestionResponse[];
 }
+
+export interface ExamPaperSummaryDto {
+  paperId: string;
+  subjectId: string;
+  title: string;
+  description: string;
+  questionCount: number;
+}
+
+export interface ExamPaperDetailDto {
+  paperId: string;
+  subjectId: string;
+  title: string;
+  description: string;
+  questions: Question[];
+}
+
+export interface ExamAttemptDto {
+  attemptId: string;
+  userId: string;
+  examPaperId: string;
+  subjectId: string;
+  submittedAt: string;
+  score: number;
+  totalQuestions: number;
+  responses: QuizQuestionResponse[];
+}
