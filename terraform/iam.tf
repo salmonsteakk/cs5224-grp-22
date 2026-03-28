@@ -44,6 +44,7 @@ resource "aws_iam_role_policy" "ecs_task_dynamodb" {
       Action = [
         "dynamodb:GetItem",
         "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
         "dynamodb:BatchWriteItem",
         "dynamodb:Scan",
         "dynamodb:Query",
@@ -53,6 +54,15 @@ resource "aws_iam_role_policy" "ecs_task_dynamodb" {
       Resource = [
         aws_dynamodb_table.subjects.arn,
         "${aws_dynamodb_table.subjects.arn}/index/*",
+        aws_dynamodb_table.user_progress_profile.arn,
+        aws_dynamodb_table.user_topic_progress.arn,
+        "${aws_dynamodb_table.user_topic_progress.arn}/index/*",
+        aws_dynamodb_table.topic_quiz_attempts.arn,
+        "${aws_dynamodb_table.topic_quiz_attempts.arn}/index/*",
+        aws_dynamodb_table.exam_papers.arn,
+        "${aws_dynamodb_table.exam_papers.arn}/index/*",
+        aws_dynamodb_table.exam_attempts.arn,
+        "${aws_dynamodb_table.exam_attempts.arn}/index/*",
         aws_dynamodb_table.users.arn,
         "${aws_dynamodb_table.users.arn}/index/*"
       ]

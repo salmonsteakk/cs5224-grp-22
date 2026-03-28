@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import {
   Plus, Minus, X, Divide, Shapes, Leaf, Heart, Cloud, Sun,
-  CheckCircle2, Play, HelpCircle
+  Hash, Percent, Scale, Variable, BarChart3, Ruler, Triangle, Box, PieChart,
+  Boxes, RefreshCw, CircuitBoard, Globe2, Zap,
+  CheckCircle2, Play, HelpCircle,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,20 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Heart,
   Cloud,
   Sun,
+  Hash,
+  Percent,
+  Scale,
+  Variable,
+  BarChart3,
+  Ruler,
+  Triangle,
+  Box,
+  PieChart,
+  Boxes,
+  RefreshCw,
+  CircuitBoard,
+  Globe2,
+  Zap,
 };
 
 interface TopicCardProps {

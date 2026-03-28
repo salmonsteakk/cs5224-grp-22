@@ -8,6 +8,8 @@ import TopicLessonPage from "./pages/TopicLessonPage";
 import PracticePage from "./pages/PracticePage";
 import SubjectPracticePage from "./pages/SubjectPracticePage";
 import TopicQuizPage from "./pages/TopicQuizPage";
+import ExamsPage from "./pages/ExamsPage";
+import ExamPaperPage from "./pages/ExamPaperPage";
 import DashboardPage from "./pages/DashboardPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import LoginPage from "./pages/LoginPage";
@@ -31,6 +33,8 @@ export default function App() {
               <Route path="/practice" element={<PracticePage />} />
               <Route path="/practice/:subjectId" element={<SubjectPracticePage />} />
               <Route path="/practice/:subjectId/:topicId" element={<TopicQuizPage />} />
+              <Route path="/exams" element={<ExamsPage />} />
+              <Route path="/exams/paper/:paperId" element={<ExamPaperPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
             </Route>
 

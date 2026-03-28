@@ -1,14 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CheckCircle2, XCircle, ArrowRight, RotateCcw, Trophy, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import type { Question } from "@/types";
+import type { Question, QuizCompletionResult } from "@/types";
 
 interface QuizProps {
   questions: Question[];
   subjectColor: "math" | "science";
-  onComplete: (score: number, total: number) => void;
+  onComplete: (result: QuizCompletionResult) => void;
 }
 
 export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
@@ -20,6 +20,7 @@ export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
   const [answeredQuestions, setAnsweredQuestions] = useState<boolean[]>(
     new Array(questions.length).fill(false)
   );
+  const answersRef = useRef<(number | null)[]>(new Array(questions.length).fill(null));
 
   const isMath = subjectColor === "math";
   const accentColor = isMath ? "bg-blue-500" : "bg-emerald-500";
@@ -42,6 +43,8 @@ export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
     newAnswered[currentIndex] = true;
     setAnsweredQuestions(newAnswered);
 
+    answersRef.current[currentIndex] = selectedAnswer;
+
     if (selectedAnswer === currentQuestion.correctAnswer) {
       setScore((prev) => prev + 1);
     }
@@ -58,19 +61,36 @@ export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
   };
 
   const handleRestart = () => {
+    completionSentRef.current = false;
     setCurrentIndex(0);
     setSelectedAnswer(null);
     setShowResult(false);
     setScore(0);
     setIsQuizComplete(false);
     setAnsweredQuestions(new Array(questions.length).fill(false));
+    answersRef.current = new Array(questions.length).fill(null);
   };
 
+  const completionSentRef = useRef(false);
+
   useEffect(() => {
-    if (isQuizComplete) {
-      onComplete(score, questions.length);
-    }
-  }, [isQuizComplete, score, questions.length, onComplete]);
+    if (!isQuizComplete || completionSentRef.current) return;
+    completionSentRef.current = true;
+    const responses = questions.map((q, i) => {
+      const selected = answersRef.current[i];
+      return {
+        questionId: q.id,
+        selectedIndex: selected ?? -1,
+        correct: selected === q.correctAnswer,
+      };
+    });
+    const finalScore = responses.filter((r) => r.correct).length;
+    onComplete({
+      score: finalScore,
+      totalQuestions: questions.length,
+      responses,
+    });
+  }, [isQuizComplete, questions, onComplete]);
 
   const getScoreMessage = () => {
     const percentage = (score / questions.length) * 100;
@@ -123,13 +143,13 @@ export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className={`${lightBg} pb-4`}>
+      <CardHeader className={`${lightBg} p-4`}>
         <div className="mb-4 flex items-center justify-between">
           <span className="text-sm font-medium text-muted-foreground">
             Question {currentIndex + 1} of {questions.length}
           </span>
           <span className="text-sm font-medium text-foreground">
-            Score: {score}/{currentIndex}
+            Score: {score}/{questions.length}
           </span>
         </div>
         <Progress value={progressPercent} className={`h-2 ${progressColor}`} />

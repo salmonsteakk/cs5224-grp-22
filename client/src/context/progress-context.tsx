@@ -1,42 +1,73 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
+import { useAuth } from "@/context/auth-context";
+import {
+  getProgressProfile,
+  getProgressTopics,
+  putTopicProgress,
+  postQuizAttempt,
+} from "@/services/api";
+import type {
+  StudentProgress,
+  TopicProgress,
+  LessonProgress,
+  QuizCompletionResult,
+  TopicProgressRowDto,
+  ProgressProfileDto,
+} from "@/types";
 
-interface LessonProgress {
-  completed: boolean;
-  watchedAt?: string;
-}
+const STORAGE_KEY = "student-progress";
 
-interface QuizAttempt {
-  score: number;
-  totalQuestions: number;
-  attemptedAt: string;
-}
+const defaultTopicProgress = (): TopicProgress => ({
+  lessons: {},
+  quizAttempts: [],
+  bestScore: 0,
+});
 
-interface TopicProgress {
-  lessons: Record<string, LessonProgress>;
-  quizAttempts: QuizAttempt[];
-  bestScore: number;
-}
+const defaultProgress: StudentProgress = {
+  subjects: {},
+  totalPoints: 0,
+  level: 1,
+  achievements: [],
+};
 
-interface SubjectProgress {
-  topics: Record<string, TopicProgress>;
-}
-
-interface StudentProgress {
-  subjects: Record<string, SubjectProgress>;
-  totalPoints: number;
-  level: number;
-  achievements: string[];
+function mergeServerProgress(
+  profile: ProgressProfileDto,
+  rows: TopicProgressRowDto[]
+): StudentProgress {
+  const subjects: StudentProgress["subjects"] = {};
+  for (const row of rows) {
+    if (!subjects[row.subjectId]) {
+      subjects[row.subjectId] = { topics: {} };
+    }
+    subjects[row.subjectId].topics[row.topicId] = {
+      lessons: row.lessons || {},
+      quizAttempts: [],
+      bestScore: row.bestScore,
+      quizAttemptCount: row.quizAttemptCount,
+      quizScoreSum: row.quizScoreSum,
+      quizQuestionSum: row.quizQuestionSum,
+    };
+  }
+  return {
+    subjects,
+    totalPoints: profile.totalPoints,
+    level: profile.level,
+    achievements: profile.achievements || [],
+  };
 }
 
 interface ProgressContextType {
   progress: StudentProgress;
+  isProgressLoaded: boolean;
+  refreshProgressFromServer: () => Promise<void>;
   markLessonComplete: (subjectId: string, topicId: string, lessonId: string) => void;
-  recordQuizAttempt: (
-    subjectId: string,
-    topicId: string,
-    score: number,
-    totalQuestions: number
-  ) => void;
+  recordQuizAttempt: (subjectId: string, topicId: string, result: QuizCompletionResult) => void;
   getTopicProgress: (subjectId: string, topicId: string) => TopicProgress;
   getLessonProgress: (
     subjectId: string,
@@ -57,44 +88,76 @@ interface ProgressContextType {
   };
 }
 
-const defaultProgress: StudentProgress = {
-  subjects: {},
-  totalPoints: 0,
-  level: 1,
-  achievements: [],
-};
-
 const ProgressContext = createContext<ProgressContextType | undefined>(undefined);
 
 export function ProgressProvider({ children }: { children: React.ReactNode }) {
+  const { token, isAuthenticated } = useAuth();
   const [progress, setProgress] = useState<StudentProgress>(defaultProgress);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  useEffect(() => {
-    const saved = localStorage.getItem("student-progress");
-    if (saved) {
-      try {
-        setProgress(JSON.parse(saved));
-      } catch {
-        setProgress(defaultProgress);
-      }
+  const refreshProgressFromServer = useCallback(async () => {
+    if (!token) return;
+    try {
+      const [profile, topicsRes] = await Promise.all([
+        getProgressProfile(token),
+        getProgressTopics(token),
+      ]);
+      setProgress(mergeServerProgress(profile, topicsRes.topics));
+    } catch (e) {
+      console.error("Failed to refresh progress from server", e);
     }
-    setIsLoaded(true);
-  }, []);
+  }, [token]);
 
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem("student-progress", JSON.stringify(progress));
+    if (!isAuthenticated || !token) {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          setProgress(JSON.parse(saved) as StudentProgress);
+        } catch {
+          setProgress(defaultProgress);
+        }
+      } else {
+        setProgress(defaultProgress);
+      }
+      setIsLoaded(true);
+      return;
     }
-  }, [progress, isLoaded]);
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const [profile, topicsRes] = await Promise.all([
+          getProgressProfile(token),
+          getProgressTopics(token),
+        ]);
+        if (!cancelled) {
+          setProgress(mergeServerProgress(profile, topicsRes.topics));
+        }
+      } catch (e) {
+        console.error("Failed to load progress", e);
+        if (!cancelled) setProgress(defaultProgress);
+      } finally {
+        if (!cancelled) setIsLoaded(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, token]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (isAuthenticated && token) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+  }, [progress, isLoaded, isAuthenticated, token]);
 
   const getTopicProgress = useCallback(
     (subjectId: string, topicId: string): TopicProgress => {
       return (
         progress.subjects[subjectId]?.topics[topicId] || {
-          lessons: {},
-          quizAttempts: [],
-          bestScore: 0,
+          ...defaultTopicProgress(),
         }
       );
     },
@@ -114,28 +177,25 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
 
   const markLessonComplete = useCallback(
     (subjectId: string, topicId: string, lessonId: string) => {
+      const watchedAt = new Date().toISOString();
+
       setProgress((prev) => {
-        const newProgress = { ...prev };
+        const newProgress: StudentProgress = {
+          ...prev,
+          subjects: { ...prev.subjects },
+        };
 
         if (!newProgress.subjects[subjectId]) {
           newProgress.subjects[subjectId] = { topics: {} };
         }
         if (!newProgress.subjects[subjectId].topics[topicId]) {
-          newProgress.subjects[subjectId].topics[topicId] = {
-            lessons: {},
-            quizAttempts: [],
-            bestScore: 0,
-          };
+          newProgress.subjects[subjectId].topics[topicId] = defaultTopicProgress();
         }
 
-        const wasCompleted =
-          newProgress.subjects[subjectId].topics[topicId].lessons[lessonId]
-            ?.completed;
+        const topic = newProgress.subjects[subjectId].topics[topicId];
+        const wasCompleted = topic.lessons[lessonId]?.completed;
 
-        newProgress.subjects[subjectId].topics[topicId].lessons[lessonId] = {
-          completed: true,
-          watchedAt: new Date().toISOString(),
-        };
+        topic.lessons = { ...topic.lessons, [lessonId]: { completed: true, watchedAt } };
 
         if (!wasCompleted) {
           newProgress.totalPoints += 10;
@@ -145,60 +205,68 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
             (total, subject) =>
               total +
               Object.values(subject.topics).reduce(
-                (topicTotal, topic) =>
-                  topicTotal +
-                  Object.values(topic.lessons).filter((l) => l.completed).length,
+                (topicTotal, t) =>
+                  topicTotal + Object.values(t.lessons).filter((l) => l.completed).length,
                 0
               ),
             0
           );
 
-          if (lessonsCompleted === 1 && !newProgress.achievements.includes("first-lesson")) {
-            newProgress.achievements.push("first-lesson");
-          }
-          if (lessonsCompleted >= 5 && !newProgress.achievements.includes("five-lessons")) {
-            newProgress.achievements.push("five-lessons");
-          }
-          if (lessonsCompleted >= 10 && !newProgress.achievements.includes("ten-lessons")) {
-            newProgress.achievements.push("ten-lessons");
-          }
+          const ach = [...newProgress.achievements];
+          if (lessonsCompleted === 1 && !ach.includes("first-lesson")) ach.push("first-lesson");
+          if (lessonsCompleted >= 5 && !ach.includes("five-lessons")) ach.push("five-lessons");
+          if (lessonsCompleted >= 10 && !ach.includes("ten-lessons")) ach.push("ten-lessons");
+          newProgress.achievements = ach;
         }
 
         return newProgress;
       });
+
+      if (token) {
+        void (async () => {
+          try {
+            await putTopicProgress(token, subjectId, topicId, {
+              lessons: { [lessonId]: { completed: true, watchedAt } },
+            });
+            await refreshProgressFromServer();
+          } catch (e) {
+            console.error("markLessonComplete API failed", e);
+          }
+        })();
+      }
     },
-    []
+    [token, refreshProgressFromServer]
   );
 
   const recordQuizAttempt = useCallback(
-    (
-      subjectId: string,
-      topicId: string,
-      score: number,
-      totalQuestions: number
-    ) => {
+    (subjectId: string, topicId: string, result: QuizCompletionResult) => {
+      const { score, totalQuestions, responses } = result;
+      const attemptedAt = new Date().toISOString();
+      const percentage = Math.round((score / totalQuestions) * 100);
+
       setProgress((prev) => {
-        const newProgress = { ...prev };
+        const newProgress: StudentProgress = {
+          ...prev,
+          subjects: { ...prev.subjects },
+        };
 
         if (!newProgress.subjects[subjectId]) {
           newProgress.subjects[subjectId] = { topics: {} };
         }
         if (!newProgress.subjects[subjectId].topics[topicId]) {
-          newProgress.subjects[subjectId].topics[topicId] = {
-            lessons: {},
-            quizAttempts: [],
-            bestScore: 0,
-          };
+          newProgress.subjects[subjectId].topics[topicId] = defaultTopicProgress();
         }
 
         const topic = newProgress.subjects[subjectId].topics[topicId];
-        const percentage = Math.round((score / totalQuestions) * 100);
+        const prevCount = topic.quizAttemptCount ?? topic.quizAttempts.length;
 
-        topic.quizAttempts.push({
-          score,
-          totalQuestions,
-          attemptedAt: new Date().toISOString(),
-        });
+        topic.quizAttempts = [
+          ...topic.quizAttempts,
+          { score, totalQuestions, attemptedAt, responses },
+        ];
+        topic.quizAttemptCount = prevCount + 1;
+        topic.quizScoreSum = (topic.quizScoreSum ?? 0) + score;
+        topic.quizQuestionSum = (topic.quizQuestionSum ?? 0) + totalQuestions;
 
         if (percentage > topic.bestScore) {
           topic.bestScore = percentage;
@@ -207,31 +275,44 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
         newProgress.totalPoints += score * 5;
         newProgress.level = Math.floor(newProgress.totalPoints / 100) + 1;
 
-        if (percentage === 100 && !newProgress.achievements.includes("perfect-score")) {
-          newProgress.achievements.push("perfect-score");
-        }
+        const ach = [...newProgress.achievements];
+        if (percentage === 100 && !ach.includes("perfect-score")) ach.push("perfect-score");
 
         const totalQuizzes = Object.values(newProgress.subjects).reduce(
           (total, subject) =>
             total +
             Object.values(subject.topics).reduce(
-              (topicTotal, t) => topicTotal + t.quizAttempts.length,
+              (topicTotal, t) => topicTotal + (t.quizAttemptCount ?? t.quizAttempts.length),
               0
             ),
           0
         );
 
-        if (totalQuizzes === 1 && !newProgress.achievements.includes("first-quiz")) {
-          newProgress.achievements.push("first-quiz");
-        }
-        if (totalQuizzes >= 10 && !newProgress.achievements.includes("ten-quizzes")) {
-          newProgress.achievements.push("ten-quizzes");
-        }
+        if (totalQuizzes === 1 && !ach.includes("first-quiz")) ach.push("first-quiz");
+        if (totalQuizzes >= 10 && !ach.includes("ten-quizzes")) ach.push("ten-quizzes");
+        newProgress.achievements = ach;
 
         return newProgress;
       });
+
+      if (token) {
+        void (async () => {
+          try {
+            await postQuizAttempt(token, {
+              subjectId,
+              topicId,
+              score,
+              totalQuestions,
+              responses,
+            });
+            await refreshProgressFromServer();
+          } catch (e) {
+            console.error("recordQuizAttempt API failed", e);
+          }
+        })();
+      }
     },
-    []
+    [token, refreshProgressFromServer]
   );
 
   const getSubjectStats = useCallback(
@@ -252,14 +333,22 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       let totalQs = 0;
 
       Object.values(subject.topics).forEach((topic) => {
-        lessonsCompleted += Object.values(topic.lessons).filter(
-          (l) => l.completed
-        ).length;
-        quizzesTaken += topic.quizAttempts.length;
-        topic.quizAttempts.forEach((attempt) => {
-          totalScore += attempt.score;
-          totalQs += attempt.totalQuestions;
-        });
+        lessonsCompleted += Object.values(topic.lessons).filter((l) => l.completed).length;
+        const n = topic.quizAttemptCount ?? topic.quizAttempts.length;
+        quizzesTaken += n;
+        if (
+          topic.quizScoreSum != null &&
+          topic.quizQuestionSum != null &&
+          topic.quizAttempts.length === 0
+        ) {
+          totalScore += topic.quizScoreSum;
+          totalQs += topic.quizQuestionSum;
+        } else {
+          topic.quizAttempts.forEach((attempt) => {
+            totalScore += attempt.score;
+            totalQs += attempt.totalQuestions;
+          });
+        }
       });
 
       return {
@@ -280,14 +369,21 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
 
     Object.values(progress.subjects).forEach((subject) => {
       Object.values(subject.topics).forEach((topic) => {
-        totalLessonsCompleted += Object.values(topic.lessons).filter(
-          (l) => l.completed
-        ).length;
-        totalQuizzesTaken += topic.quizAttempts.length;
-        topic.quizAttempts.forEach((attempt) => {
-          totalScore += attempt.score;
-          totalQs += attempt.totalQuestions;
-        });
+        totalLessonsCompleted += Object.values(topic.lessons).filter((l) => l.completed).length;
+        totalQuizzesTaken += topic.quizAttemptCount ?? topic.quizAttempts.length;
+        if (
+          topic.quizScoreSum != null &&
+          topic.quizQuestionSum != null &&
+          topic.quizAttempts.length === 0
+        ) {
+          totalScore += topic.quizScoreSum;
+          totalQs += topic.quizQuestionSum;
+        } else {
+          topic.quizAttempts.forEach((attempt) => {
+            totalScore += attempt.score;
+            totalQs += attempt.totalQuestions;
+          });
+        }
       });
     });
 
@@ -303,6 +399,8 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     <ProgressContext.Provider
       value={{
         progress,
+        isProgressLoaded: isLoaded,
+        refreshProgressFromServer,
         markLessonComplete,
         recordQuizAttempt,
         getTopicProgress,

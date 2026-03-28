@@ -4,6 +4,7 @@ import {
   BookOpen,
   Dumbbell,
   LayoutDashboard,
+  ScrollText,
   Sparkles,
   Menu,
   X,
@@ -19,6 +20,7 @@ const navItems = [
   { to: "/", label: "Home", icon: Sparkles },
   { to: "/learn", label: "Learn", icon: BookOpen },
   { to: "/practice", label: "Practice", icon: Dumbbell },
+  { to: "/exams", label: "Exams", icon: ScrollText },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
 ];
 
