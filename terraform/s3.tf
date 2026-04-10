@@ -32,6 +32,20 @@ resource "aws_s3_bucket_policy" "frontend" {
   })
 }
 
+resource "aws_s3_bucket" "videos" {
+  bucket        = "${var.app_name}-videos-${data.aws_caller_identity.current.account_id}"
+  force_destroy = true
+  tags          = { Name = "${var.app_name}-videos" }
+}
+
+resource "aws_s3_bucket_public_access_block" "videos" {
+  bucket                  = aws_s3_bucket.videos.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 resource "aws_s3_bucket_policy" "video_policy" {
   bucket = aws_s3_bucket.videos.id
   policy = jsonencode({
