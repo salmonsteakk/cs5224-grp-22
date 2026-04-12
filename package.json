@@ -18,5 +18,8 @@
     "deploy:prod": "./scripts/deploy.sh",
     "deploy:infra": "cd terraform && terraform apply",
     "deploy:logs": "aws logs tail /ecs/learnbright --follow --region ap-southeast-1"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
   }
 }
