@@ -17,14 +17,15 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ChatbotSidebar from "./components/ChatbotSidebar";
+import { isAssistantRoute } from "./lib/chat-assistant-routes";
 
 function AppRoutes() {
   const { pathname } = useLocation();
-  const isStudyPage = pathname.startsWith("/learn") || pathname.startsWith("/practice");
+  const showAssistant = isAssistantRoute(pathname);
 
   return (
-    <div className="min-h-screen flex">
-      <div className="flex-1 overflow-hidden">
+    <div className="min-h-screen flex items-start">
+      <div className="min-w-0 flex-1">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
@@ -45,7 +46,7 @@ function AppRoutes() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
-      {isStudyPage && <ChatbotSidebar />}
+      {showAssistant && <ChatbotSidebar />}
     </div>
   );
 }
