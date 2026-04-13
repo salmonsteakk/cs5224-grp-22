@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { useProgress } from "@/context/progress-context";
 import { useChatbot } from "@/context/chatbot-context";
+import { isAssistantRoute } from "@/lib/chat-assistant-routes";
 
 const navItems = [
   { to: "/", label: "Home", icon: Sparkles },
@@ -34,7 +35,7 @@ export function Navigation() {
   const { toggleSidebar } = useChatbot();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const isStudyPage = pathname.startsWith("/learn") || pathname.startsWith("/practice");
+  const showAssistant = isAssistantRoute(pathname);
 
   function handleLogout() {
     clearAuthSession();
@@ -90,7 +91,7 @@ export function Navigation() {
                   <UserRound className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium text-foreground">{user?.name}</span>
                 </div>
-                {isStudyPage && (
+                {showAssistant && (
                   <Button
                     variant="outline"
                     size="icon"
@@ -110,7 +111,7 @@ export function Navigation() {
                   <LogOut className="h-4 w-4" />
                   Logout
                 </Button>
-                {isStudyPage && (
+                {showAssistant && (
                   <Button
                     variant="outline"
                     size="icon"
