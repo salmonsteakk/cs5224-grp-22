@@ -25,6 +25,8 @@ services:
       - "3001:3001"
     volumes:
       - ./server/src:/app/src
+    env_file:
+      - .env
     environment:
       - PORT=3001
       - NODE_ENV=development

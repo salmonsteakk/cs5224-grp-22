@@ -11,10 +11,12 @@ import {
   LogIn,
   LogOut,
   UserRound,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { useProgress } from "@/context/progress-context";
+import { useChatbot } from "@/context/chatbot-context";
 
 const navItems = [
   { to: "/", label: "Home", icon: Sparkles },
@@ -29,7 +31,10 @@ export function Navigation() {
   const { pathname } = useLocation();
   const { isAuthenticated, user, clearAuthSession } = useAuth();
   const { progress } = useProgress();
+  const { toggleSidebar } = useChatbot();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const isStudyPage = pathname.startsWith("/learn") || pathname.startsWith("/practice");
 
   function handleLogout() {
     clearAuthSession();
@@ -85,6 +90,17 @@ export function Navigation() {
                   <UserRound className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium text-foreground">{user?.name}</span>
                 </div>
+                {isStudyPage && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={toggleSidebar}
+                    className="hidden gap-2 md:inline-flex"
+                    title="Open study assistant"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -94,6 +110,17 @@ export function Navigation() {
                   <LogOut className="h-4 w-4" />
                   Logout
                 </Button>
+                {isStudyPage && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={toggleSidebar}
+                    className="md:hidden"
+                    title="Open study assistant"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="icon"
