@@ -10,6 +10,7 @@ import type {
   ExamPaperDetailDto,
   ExamAttemptDto,
 } from "../types";
+import type { DashboardCoachRequestBody } from "../lib/dashboard-coach-payload";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
@@ -169,3 +170,9 @@ export const listExamAttempts = (token: string, examPaperId: string) => {
 
 export const getExamAttempt = (token: string, attemptId: string) =>
   fetchJson<ExamAttemptDto>(`/exams/attempts/${encodeURIComponent(attemptId)}`, { token });
+
+export const postDashboardCoach = (body: DashboardCoachRequestBody) =>
+  fetchJson<{ coachText: string }>("/dashboard-coach", {
+    method: "POST",
+    body,
+  });
