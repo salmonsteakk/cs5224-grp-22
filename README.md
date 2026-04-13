@@ -355,5 +355,5 @@ npm run deploy
 - **Learning:** Browse Math and Science subjects, pick a topic, and watch simulated video lessons
 - **Practice:** Take multiple-choice quizzes per topic with instant feedback and explanations
 - **Dashboard:** Track total points, level progression, lessons completed, quiz accuracy, and 6 unlockable achievements
-- **Progress:** Stored in browser localStorage (points, levels, achievements, per-lesson and per-quiz tracking)
+- **Progress:** Stored in localStorage for guest users and in DynamoDB for authenticated users
 - **Responsive:** Mobile hamburger menu, responsive grid layouts
