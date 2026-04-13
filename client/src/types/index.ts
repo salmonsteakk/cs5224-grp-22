@@ -95,6 +95,19 @@ export interface StudentProgress {
   achievements: string[];
 }
 
+export interface SubjectStats {
+  lessonsCompleted: number;
+  quizzesTaken: number;
+  averageScore: number;
+}
+
+export interface TotalStats {
+  totalLessonsCompleted: number;
+  totalQuizzesTaken: number;
+  totalQuestionsAnswered: number;
+  overallAccuracy: number;
+}
+
 export interface ProgressProfileDto {
   userId: string;
   totalPoints: number;
