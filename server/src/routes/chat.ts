@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { HfChatMessage } from "../lib/hf.js";
 import { getHfCredentials, hfChatCompletion } from "../lib/hf.js";
+import { evaluateAiOutput, getAbstainFallback, logAiPolicyDecision } from "../lib/ai-policy.js";
 
 const router = Router();
 
@@ -64,7 +65,39 @@ router.post("/", async (req, res) => {
       });
     }
 
-    res.json({ reply: result.text });
+    const policy = evaluateAiOutput(result.text, {
+      endpoint: "/api/chat",
+      request: req,
+    });
+    logAiPolicyDecision(
+      {
+        endpoint: "/api/chat",
+        request: req,
+      },
+      policy
+    );
+
+    if (policy.decision !== "allow") {
+      return res.json({
+        reply: getAbstainFallback("chat"),
+        policy: {
+          decision: policy.decision,
+          reason: policy.reason,
+          confidence: policy.confidence,
+          requestId: policy.requestId,
+        },
+      });
+    }
+
+    res.json({
+      reply: result.text,
+      policy: {
+        decision: policy.decision,
+        reason: policy.reason,
+        confidence: policy.confidence,
+        requestId: policy.requestId,
+      },
+    });
   } catch (error) {
     console.error("Chat error:", error);
     res.status(500).json({ error: "Chat request failed" });

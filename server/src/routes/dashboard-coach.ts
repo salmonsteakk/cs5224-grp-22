@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { hfChatCompletion } from "../lib/hf.js";
+import { evaluateAiOutput, getAbstainFallback, logAiPolicyDecision } from "../lib/ai-policy.js";
 
 const router = Router();
 
@@ -131,7 +132,39 @@ Keep total output under 120 words. No markdown headings or code blocks.`;
       return res.status(status).json({ error: result.body });
     }
 
-    res.json({ coachText: result.text });
+    const policy = evaluateAiOutput(result.text, {
+      endpoint: "/api/dashboard-coach",
+      request: req,
+    });
+    logAiPolicyDecision(
+      {
+        endpoint: "/api/dashboard-coach",
+        request: req,
+      },
+      policy
+    );
+
+    if (policy.decision !== "allow") {
+      return res.json({
+        coachText: getAbstainFallback("dashboard-coach"),
+        policy: {
+          decision: policy.decision,
+          reason: policy.reason,
+          confidence: policy.confidence,
+          requestId: policy.requestId,
+        },
+      });
+    }
+
+    res.json({
+      coachText: result.text,
+      policy: {
+        decision: policy.decision,
+        reason: policy.reason,
+        confidence: policy.confidence,
+        requestId: policy.requestId,
+      },
+    });
   } catch (error) {
     console.error("Dashboard coach error:", error);
     res.status(500).json({ error: "Coach request failed" });

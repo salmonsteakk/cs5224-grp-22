@@ -41,9 +41,10 @@ import {
   getLearnSubjects,
   getWeeklyInterventionSummary,
   listExamAttempts,
+  postAiReport,
   postDashboardCoach,
 } from "@/services/api";
-import type { ExamPaperSummaryDto, Subject, WeeklyInterventionSummaryDto } from "@/types";
+import type { AiPolicyMeta, ExamPaperSummaryDto, Subject, WeeklyInterventionSummaryDto } from "@/types";
 
 const achievements = [
   { id: "first-lesson", title: "First Steps", description: "Complete your first lesson", icon: Star },
@@ -103,7 +104,10 @@ export default function DashboardPage() {
   >([]);
   const [examsLoading, setExamsLoading] = useState(false);
   const [coachText, setCoachText] = useState<string | null>(null);
+  const [coachPolicy, setCoachPolicy] = useState<AiPolicyMeta | null>(null);
   const [coachFailed, setCoachFailed] = useState(false);
+  const [coachReportId, setCoachReportId] = useState<string | null>(null);
+  const [coachReportError, setCoachReportError] = useState<string | null>(null);
   const [weeklySummary, setWeeklySummary] = useState<WeeklyInterventionSummaryDto | null>(null);
 
   useEffect(() => {
@@ -237,16 +241,23 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!coachPayload) {
       setCoachText(null);
+      setCoachPolicy(null);
       setCoachFailed(false);
+      setCoachReportId(null);
+      setCoachReportError(null);
       return;
     }
     let cancelled = false;
     setCoachText(null);
+    setCoachPolicy(null);
     setCoachFailed(false);
+    setCoachReportId(null);
+    setCoachReportError(null);
     postDashboardCoach(coachPayload)
       .then((r) => {
         if (cancelled) return;
         const t = r.coachText?.trim();
+        setCoachPolicy(r.policy ?? null);
         if (t) setCoachText(t);
         else setCoachFailed(true);
       })
@@ -257,6 +268,29 @@ export default function DashboardPage() {
       cancelled = true;
     };
   }, [coachPayload]);
+
+  const reportCoachMessage = async () => {
+    if (!token || !coachText || coachReportId) return;
+    try {
+      const created = await postAiReport(token, {
+        source: "dashboard-coach",
+        outputExcerpt: coachText.slice(0, 500),
+        reportReason: "User flagged dashboard AI tip for review",
+        priority: "medium",
+        endpoint: "/api/dashboard-coach",
+        policyDecision: coachPolicy?.decision,
+        policyReason: coachPolicy?.reason,
+        policyConfidence: coachPolicy?.confidence,
+        policyRequestId: coachPolicy?.requestId,
+        pathname: "/dashboard",
+        reporterName: user?.name ?? undefined,
+      });
+      setCoachReportId(created.reportId);
+      setCoachReportError(null);
+    } catch {
+      setCoachReportError("Could not submit report. Please try again.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -394,6 +428,32 @@ export default function DashboardPage() {
                       Getting your tip…
                     </p>
                   )}
+                  {coachPolicy && coachPolicy.decision !== "allow" && (
+                    <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                      Transparent correction notice: this response is currently limited by AI quality
+                      safeguards while we review reliability.
+                    </p>
+                  )}
+                  {coachText && token && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        disabled={Boolean(coachReportId)}
+                        onClick={() => void reportCoachMessage()}
+                      >
+                        {coachReportId ? "Reported" : "Report this tip"}
+                      </Button>
+                      {coachReportId && (
+                        <span className="text-xs text-muted-foreground">
+                          Thank you. We queued this for triage.
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {coachReportError && <p className="text-xs text-destructive">{coachReportError}</p>}
                   {coachQuickLinks.length > 0 && (
                     <div
                       className="flex flex-col gap-2 border-t border-border/60 pt-4"

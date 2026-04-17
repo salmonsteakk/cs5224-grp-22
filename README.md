@@ -359,6 +359,57 @@ npm run deploy
 - **Progress:** Stored in localStorage for guest users and in DynamoDB for authenticated users
 - **Responsive:** Mobile hamburger menu, responsive grid layouts
 
+## AI Quality Assurance
+
+AI quality is managed as a **product-risk control area**, not a UI enhancement. We gate generated outputs with prevention, detection, and correction controls.
+
+### Authoritative source scope
+
+- All AI outputs must remain within **MOE-aligned PSLE syllabus boundaries** and approved LearnBright content sets.
+- Approved content sets include seeded lesson/topic/question data and vetted recommendation templates.
+- AI outputs that rely on missing or out-of-scope content must abstain and fallback to deterministic guidance.
+
+### Generation constraints
+
+- AI output is curriculum-bounded: no non-syllabus advice, fabricated scores, or invented topics.
+- Structured prompts enforce context use and cap response size for student readability.
+- Rule-based links and action buttons remain source-of-truth in UI; AI text supports but does not replace deterministic controls.
+
+### Confidence threshold and abstain/fallback behavior
+
+- Generated output is only shown when policy checks pass and confidence is above threshold.
+- If confidence is below threshold, output is suppressed or replaced with a safe fallback message.
+- If AI is temporarily disabled or suppressed, students receive deterministic next-step suggestions from existing recommendation logic.
+
+### Review pipeline
+
+- **Pre-release human review:** Generated explanation templates and fallback text are reviewed by maintainers before deployment.
+- **Post-release sampling and triage:** Weekly output samples are scored against factual accuracy, curriculum alignment, and readability; issues are added to triage queue.
+- **Correction SLA and audit trail:** Wrong outputs are logged, triaged, corrected under SLA, and tracked in immutable audit records.
+
+### Failure-handling policy
+
+- **User report button:** Users can flag problematic AI explanations directly from AI surfaces.
+- **Immediate suppression:** Flagged or policy-violating explanation patterns can be suppressed quickly using server-side AI toggle controls.
+- **Transparent correction notice:** Corrected outputs include a visible notice that a prior response was fixed.
+
+### Acceptance criteria for AI outputs
+
+- **Factual accuracy target:** >=95% on rolling weekly samples.
+- **Curriculum alignment target:** >=97% of sampled outputs aligned to MOE scope and approved content sets.
+- **Readability target:** >=90% of sampled outputs pass age-appropriate readability rubric.
+
+See [`docs/ai-quality-assurance.md`](docs/ai-quality-assurance.md) for operational workflow, severity levels, triage queue process, and correction SLAs.
+
+### AI release checklist
+
+Before running `npm run deploy`, verify:
+
+- Human reviewer sign-off completed for AI prompt/template changes.
+- Policy gates (suppression toggle, confidence threshold, abstain fallback) pass in test environment.
+- Report queue ingestion and audit events are functioning.
+- Known high-severity AI issues are resolved or mitigated.
+
 ## Differentiation Success Metrics
 
 - **Learning Growth metric:** `% improvement from prior accuracy baseline to latest attempt accuracy`, tracked per learner and surfaced in weekly summaries.
