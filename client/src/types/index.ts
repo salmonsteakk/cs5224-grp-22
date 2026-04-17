@@ -213,3 +213,42 @@ export interface ExamAttemptDto {
   totalQuestions: number;
   responses: QuizQuestionResponse[];
 }
+
+export interface AiPolicyMeta {
+  decision: "allow" | "abstain" | "suppressed";
+  reason: string;
+  confidence: number;
+  requestId: string;
+}
+
+export interface ChatReplyDto {
+  reply: string;
+  policy?: AiPolicyMeta;
+}
+
+export interface DashboardCoachResponseDto {
+  coachText: string;
+  policy?: AiPolicyMeta;
+}
+
+export interface CreateAiReportBody {
+  source: "chat" | "dashboard-coach";
+  outputExcerpt: string;
+  reportReason: string;
+  priority?: "critical" | "high" | "medium" | "low";
+  endpoint?: string;
+  policyDecision?: string;
+  policyReason?: string;
+  policyConfidence?: number;
+  policyRequestId?: string;
+  pathname?: string;
+  reporterName?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface CreateAiReportResponse {
+  reportId: string;
+  status: "new" | "triaged" | "corrected" | "suppressed" | "closed";
+  priority: "critical" | "high" | "medium" | "low";
+  createdAt: string;
+}

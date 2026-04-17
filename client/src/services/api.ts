@@ -11,6 +11,9 @@ import type {
   ExamPaperSummaryDto,
   ExamPaperDetailDto,
   ExamAttemptDto,
+  DashboardCoachResponseDto,
+  CreateAiReportBody,
+  CreateAiReportResponse,
 } from "../types";
 import type { DashboardCoachRequestBody } from "../lib/dashboard-coach-payload";
 
@@ -188,7 +191,14 @@ export const getExamAttempt = (token: string, attemptId: string) =>
   fetchJson<ExamAttemptDto>(`/exams/attempts/${encodeURIComponent(attemptId)}`, { token });
 
 export const postDashboardCoach = (body: DashboardCoachRequestBody) =>
-  fetchJson<{ coachText: string }>("/dashboard-coach", {
+  fetchJson<DashboardCoachResponseDto>("/dashboard-coach", {
     method: "POST",
     body,
+  });
+
+export const postAiReport = (token: string, body: CreateAiReportBody) =>
+  fetchJson<CreateAiReportResponse>("/ai/reports", {
+    method: "POST",
+    body,
+    token,
   });

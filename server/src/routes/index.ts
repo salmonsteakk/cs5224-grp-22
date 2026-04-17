@@ -7,6 +7,7 @@ import examsRoutes from "./exams.js";
 import chatRoutes from "./chat.js";
 import dashboardCoachRoutes from "./dashboard-coach.js";
 import dashboardRoutes from "./dashboard.js";
+import aiReportsRoutes from "./ai-reports.js";
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use("/exams", examsRoutes);
 router.use("/chat", chatRoutes);
 router.use("/dashboard-coach", dashboardCoachRoutes);
 router.use("/dashboard", dashboardRoutes);
+router.use("/ai/reports", aiReportsRoutes);
 
 export default router;

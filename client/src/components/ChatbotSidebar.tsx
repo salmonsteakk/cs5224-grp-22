@@ -1,21 +1,26 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { X, Send, MessageCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Send, MessageCircle, ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { useChatbot } from "@/context/chatbot-context";
 import { useAuth } from "@/context/auth-context";
 import { useProgress } from "@/context/progress-context";
 import { isAssistantRoute } from "@/lib/chat-assistant-routes";
 import { Button } from "@/components/ui/button";
+import { postAiReport } from "@/services/api";
+import type { AiPolicyMeta, ChatReplyDto } from "@/types";
 
 interface Message {
   sender: "user" | "bot";
   text: string;
+  policy?: AiPolicyMeta;
+  reportId?: string;
+  reportError?: string;
 }
 
 export default function ChatbotSidebar() {
   const { isSidebarOpen, toggleSidebar, closeSidebar } = useChatbot();
   const { pathname } = useLocation();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { progress } = useProgress();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -55,7 +60,7 @@ export default function ChatbotSidebar() {
         }),
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as ChatReplyDto;
       setLoading(false);
 
       setMessages((prev) => [
@@ -63,6 +68,7 @@ export default function ChatbotSidebar() {
         {
           sender: "bot",
           text: data.reply || "Sorry, I couldn't process that. Try again.",
+          policy: data.policy,
         },
       ]);
     } catch (error) {
@@ -72,6 +78,37 @@ export default function ChatbotSidebar() {
         ...prev,
         { sender: "bot", text: "Connection error. Please try again." },
       ]);
+    }
+  };
+
+  const reportBotMessage = async (index: number) => {
+    const msg = messages[index];
+    if (!msg || msg.sender !== "bot" || !token || msg.reportId) return;
+    try {
+      const created = await postAiReport(token, {
+        source: "chat",
+        outputExcerpt: msg.text.slice(0, 500),
+        reportReason: "User flagged chat explanation for review",
+        priority: "medium",
+        endpoint: "/api/chat",
+        policyDecision: msg.policy?.decision,
+        policyReason: msg.policy?.reason,
+        policyConfidence: msg.policy?.confidence,
+        policyRequestId: msg.policy?.requestId,
+        pathname,
+        reporterName: user?.name ?? undefined,
+      });
+      setMessages((prev) =>
+        prev.map((item, i) =>
+          i === index ? { ...item, reportId: created.reportId, reportError: undefined } : item
+        )
+      );
+    } catch {
+      setMessages((prev) =>
+        prev.map((item, i) =>
+          i === index ? { ...item, reportError: "Could not submit report. Try again." } : item
+        )
+      );
     }
   };
 
@@ -153,6 +190,24 @@ export default function ChatbotSidebar() {
               >
                 {msg.text}
               </div>
+              {msg.sender === "bot" && token && (
+                <div className="mt-1 flex items-center justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    disabled={Boolean(msg.reportId)}
+                    onClick={() => void reportBotMessage(idx)}
+                  >
+                    <Flag className="mr-1 h-3 w-3" />
+                    {msg.reportId ? "Reported" : "Report"}
+                  </Button>
+                </div>
+              )}
+              {msg.reportError && (
+                <p className="mt-1 text-right text-xs text-destructive">{msg.reportError}</p>
+              )}
             </div>
           ))}
           {loading && (
