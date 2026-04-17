@@ -27,6 +27,9 @@ const userTopicProgressSchema = new dynamoose.Schema({
   quizAttemptCount: { type: Number, required: true, default: 0 },
   quizScoreSum: { type: Number, required: true, default: 0 },
   quizQuestionSum: { type: Number, required: true, default: 0 },
+  focusLoopsCompleted: { type: Number, required: true, default: 0 },
+  strategyCardOpens: { type: Number, required: true, default: 0 },
+  learningGain: { type: Number, required: true, default: 0 },
   updatedAt: { type: String, required: true },
 });
 

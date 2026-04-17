@@ -23,6 +23,9 @@ export function mergeServerProgress(
       quizAttemptCount: row.quizAttemptCount,
       quizScoreSum: row.quizScoreSum,
       quizQuestionSum: row.quizQuestionSum,
+      focusLoopsCompleted: row.focusLoopsCompleted,
+      strategyCardOpens: row.strategyCardOpens,
+      learningGain: row.learningGain,
     };
   }
 
@@ -31,6 +34,9 @@ export function mergeServerProgress(
     totalPoints: profile.totalPoints,
     level: profile.level,
     achievements: profile.achievements || [],
+    activeDays: [],
+    firstActiveAt: profile.firstActiveAt,
+    lastActiveAt: profile.lastActiveAt,
   };
 }
 

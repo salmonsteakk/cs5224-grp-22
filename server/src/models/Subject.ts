@@ -18,6 +18,12 @@ const questionSchema = new dynamoose.Schema({
   },
   correctAnswer: { type: Number, required: true },
   explanation: { type: String, required: true },
+  misconceptionTags: {
+    type: Array,
+    schema: [String],
+    default: [],
+  },
+  strategyFocus: { type: String, required: false },
 });
 
 const topicSchema = new dynamoose.Schema({

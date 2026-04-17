@@ -35,6 +35,7 @@ const defaultProgress: StudentProgress = {
   totalPoints: 0,
   level: 1,
   achievements: [],
+  activeDays: [],
 };
 
 interface ProgressContextType {
@@ -43,6 +44,7 @@ interface ProgressContextType {
   refreshProgressFromServer: () => Promise<void>;
   markLessonComplete: (subjectId: string, topicId: string, lessonId: string) => void;
   recordQuizAttempt: (subjectId: string, topicId: string, result: QuizCompletionResult) => void;
+  recordStrategyCardOpen: (subjectId: string, topicId: string) => void;
   getTopicProgress: (subjectId: string, topicId: string) => TopicProgress;
   getLessonProgress: (
     subjectId: string,
@@ -251,6 +253,24 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
         topic.quizAttemptCount = prevCount + 1;
         topic.quizScoreSum = (topic.quizScoreSum ?? 0) + score;
         topic.quizQuestionSum = (topic.quizQuestionSum ?? 0) + totalQuestions;
+        topic.focusLoopsCompleted =
+          (topic.focusLoopsCompleted ?? 0) + (result.focusLoopTag ? 1 : 0);
+        topic.learningGain =
+          topic.quizQuestionSum && topic.quizQuestionSum > totalQuestions
+            ? Math.round(
+                (((score / totalQuestions) -
+                  ((topic.quizScoreSum - score) / Math.max((topic.quizQuestionSum - totalQuestions), 1))) /
+                  Math.max(((topic.quizScoreSum - score) / Math.max((topic.quizQuestionSum - totalQuestions), 1)), 0.1)) *
+                  100
+              )
+            : 0;
+
+        const activeDay = attemptedAt.slice(0, 10);
+        const activeDays = new Set(newProgress.activeDays ?? []);
+        activeDays.add(activeDay);
+        newProgress.activeDays = Array.from(activeDays);
+        newProgress.firstActiveAt = newProgress.firstActiveAt ?? attemptedAt;
+        newProgress.lastActiveAt = attemptedAt;
 
         if (percentage > topic.bestScore) {
           topic.bestScore = percentage;
@@ -290,6 +310,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
               score,
               totalQuestions,
               responses,
+              focusLoopTag: result.focusLoopTag,
             });
             await refreshProgressFromServer();
           } catch (e) {
@@ -299,6 +320,31 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       }
     },
     [token, refreshProgressFromServer]
+  );
+
+  const recordStrategyCardOpen = useCallback(
+    (subjectId: string, topicId: string) => {
+      setProgress((prev) => {
+        const next: StudentProgress = { ...prev, subjects: { ...prev.subjects } };
+        if (!next.subjects[subjectId]) next.subjects[subjectId] = { topics: {} };
+        if (!next.subjects[subjectId].topics[topicId]) {
+          next.subjects[subjectId].topics[topicId] = defaultTopicProgress();
+        }
+        const topic = next.subjects[subjectId].topics[topicId];
+        topic.strategyCardOpens = (topic.strategyCardOpens ?? 0) + 1;
+        return next;
+      });
+
+      if (token) {
+        void putTopicProgress(token, subjectId, topicId, {
+          strategyCardOpens:
+            (progress.subjects[subjectId]?.topics[topicId]?.strategyCardOpens ?? 0) + 1,
+        }).catch((e) => {
+          console.error("recordStrategyCardOpen API failed", e);
+        });
+      }
+    },
+    [progress.subjects, token]
   );
 
   const getSubjectStats = useCallback(
@@ -316,6 +362,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
         refreshProgressFromServer,
         markLessonComplete,
         recordQuizAttempt,
+        recordStrategyCardOpen,
         getTopicProgress,
         getLessonProgress,
         getSubjectStats,

@@ -7,19 +7,26 @@ import { Navigation } from "@/components/Navigation";
 import { Quiz } from "@/components/Quiz";
 import { useProgress } from "@/context/progress-context";
 import { useAuth } from "@/context/auth-context";
-import { getLearnSubject, getQuestions, listTopicQuizAttempts } from "@/services/api";
-import type { Subject, Question, TopicQuizAttemptDto, QuizCompletionResult } from "@/types";
+import { getFocusLoop, getLearnSubject, getQuestions, listTopicQuizAttempts } from "@/services/api";
+import type {
+  FocusLoopRecommendation,
+  Subject,
+  Question,
+  TopicQuizAttemptDto,
+  QuizCompletionResult,
+} from "@/types";
 
 export default function TopicQuizPage() {
   const { subjectId, topicId } = useParams<{ subjectId: string; topicId: string }>();
   const navigate = useNavigate();
   const { token, isAuthenticated } = useAuth();
-  const { recordQuizAttempt } = useProgress();
+  const { recordQuizAttempt, recordStrategyCardOpen } = useProgress();
   const [subject, setSubject] = useState<Subject | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [attempts, setAttempts] = useState<TopicQuizAttemptDto[]>([]);
   const [attemptsLoading, setAttemptsLoading] = useState(false);
   const [expandedAttemptId, setExpandedAttemptId] = useState<string | null>(null);
+  const [focusLoop, setFocusLoop] = useState<FocusLoopRecommendation | null>(null);
 
   useEffect(() => {
     if (!subjectId || !topicId) return;
@@ -56,6 +63,13 @@ export default function TopicQuizPage() {
     (result: QuizCompletionResult) => {
       if (!subjectId || !topicId) return;
       recordQuizAttempt(subjectId, topicId, result);
+      if (result.focusLoopTag) {
+        void getFocusLoop(subjectId, topicId, result.focusLoopTag)
+          .then(setFocusLoop)
+          .catch(() => setFocusLoop(null));
+      } else {
+        setFocusLoop(null);
+      }
       void loadAttempts();
     },
     [subjectId, topicId, recordQuizAttempt, loadAttempts]
@@ -108,7 +122,28 @@ export default function TopicQuizPage() {
           questions={questions}
           subjectColor={subject.color}
           onComplete={handleQuizComplete}
+          onStrategyViewed={() => {
+            if (!subjectId || !topicId) return;
+            recordStrategyCardOpen(subjectId, topicId);
+          }}
         />
+
+        {focusLoop && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="text-lg">Targeted Practice Boost</CardTitle>
+              <p className="text-sm text-muted-foreground">{focusLoop.rationale}</p>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p className="font-medium text-foreground">Target: {focusLoop.misconceptionTag}</p>
+              {focusLoop.questions.map((q, idx) => (
+                <div key={q.id} className="rounded-md border border-border px-3 py-2">
+                  {idx + 1}. {q.question}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {isAuthenticated && (
           <Card className="mt-6">

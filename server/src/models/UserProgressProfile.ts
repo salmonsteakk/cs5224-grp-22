@@ -13,6 +13,8 @@ const profileSchema = new dynamoose.Schema({
     schema: [String],
     default: [],
   },
+  firstActiveAt: { type: String, required: false },
+  lastActiveAt: { type: String, required: false },
   updatedAt: { type: String, required: true },
 });
 

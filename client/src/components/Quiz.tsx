@@ -9,9 +9,10 @@ interface QuizProps {
   questions: Question[];
   subjectColor: "math" | "science";
   onComplete: (result: QuizCompletionResult) => void;
+  onStrategyViewed?: () => void;
 }
 
-export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
+export function Quiz({ questions, subjectColor, onComplete, onStrategyViewed }: QuizProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -20,6 +21,7 @@ export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
   const [answeredQuestions, setAnsweredQuestions] = useState<boolean[]>(
     new Array(questions.length).fill(false)
   );
+  const [showStrategy, setShowStrategy] = useState(false);
   const answersRef = useRef<(number | null)[]>(new Array(questions.length).fill(null));
 
   const isMath = subjectColor === "math";
@@ -55,6 +57,7 @@ export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
       setCurrentIndex((prev) => prev + 1);
       setSelectedAnswer(null);
       setShowResult(false);
+      setShowStrategy(false);
     } else {
       setIsQuizComplete(true);
     }
@@ -68,6 +71,7 @@ export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
     setScore(0);
     setIsQuizComplete(false);
     setAnsweredQuestions(new Array(questions.length).fill(false));
+    setShowStrategy(false);
     answersRef.current = new Array(questions.length).fill(null);
   };
 
@@ -82,13 +86,19 @@ export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
         questionId: q.id,
         selectedIndex: selected ?? -1,
         correct: selected === q.correctAnswer,
+        misconceptionTags: selected === q.correctAnswer ? [] : q.misconceptionTags ?? [],
       };
     });
     const finalScore = responses.filter((r) => r.correct).length;
+    const missedTags = responses
+      .filter((r) => !r.correct)
+      .flatMap((r) => r.misconceptionTags ?? []);
+    const focusLoopTag = missedTags.length > 0 ? missedTags[0] : undefined;
     onComplete({
       score: finalScore,
       totalQuestions: questions.length,
       responses,
+      focusLoopTag,
     });
   }, [isQuizComplete, questions, onComplete]);
 
@@ -249,6 +259,36 @@ export function Quiz({ questions, subjectColor, onComplete }: QuizProps) {
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {showResult && currentQuestion.strategyHint && (
+          <div className="mt-3 rounded-xl border border-border bg-muted/40 p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm font-semibold text-foreground">Smart Answer Tips</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowStrategy((prev) => !prev);
+                  if (!showStrategy) onStrategyViewed?.();
+                }}
+              >
+                {showStrategy ? "Hide strategy" : "Show strategy"}
+              </Button>
+            </div>
+            {showStrategy && (
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">{currentQuestion.strategyHint.title}</p>
+                <p>{currentQuestion.strategyHint.focus}</p>
+                <ul className="list-disc pl-5">
+                  {currentQuestion.strategyHint.steps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 

@@ -18,6 +18,7 @@ import {
   Clock,
   ScrollText,
   ArrowRight,
+  Users,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,8 +36,14 @@ import {
   topicQuizCoverage,
 } from "@/lib/dashboard-recommendations";
 import { buildDashboardCoachPayload } from "@/lib/dashboard-coach-payload";
-import { getExamPapers, getLearnSubjects, listExamAttempts, postDashboardCoach } from "@/services/api";
-import type { ExamPaperSummaryDto, Subject } from "@/types";
+import {
+  getExamPapers,
+  getLearnSubjects,
+  getWeeklyInterventionSummary,
+  listExamAttempts,
+  postDashboardCoach,
+} from "@/services/api";
+import type { ExamPaperSummaryDto, Subject, WeeklyInterventionSummaryDto } from "@/types";
 
 const achievements = [
   { id: "first-lesson", title: "First Steps", description: "Complete your first lesson", icon: Star },
@@ -97,6 +104,7 @@ export default function DashboardPage() {
   const [examsLoading, setExamsLoading] = useState(false);
   const [coachText, setCoachText] = useState<string | null>(null);
   const [coachFailed, setCoachFailed] = useState(false);
+  const [weeklySummary, setWeeklySummary] = useState<WeeklyInterventionSummaryDto | null>(null);
 
   useEffect(() => {
     getLearnSubjects()
@@ -142,6 +150,13 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
+  }, [token, isProgressLoaded]);
+
+  useEffect(() => {
+    if (!token || !isProgressLoaded) return;
+    getWeeklyInterventionSummary(token)
+      .then(setWeeklySummary)
+      .catch(() => setWeeklySummary(null));
   }, [token, isProgressLoaded]);
 
   const firstIncomplete = useMemo(
@@ -598,6 +613,75 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </div>
+
+            {weeklySummary && (
+              <section className="mb-8" aria-labelledby="weekly-parent-summary">
+                <Card>
+                  <CardHeader>
+                    <CardTitle id="weekly-parent-summary" className="flex items-center gap-2">
+                      <Users className="h-5 w-5 text-primary" />
+                      Weekly Parent Progress Snapshot
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(weeklySummary.periodStart).toLocaleDateString()} -{" "}
+                      {new Date(weeklySummary.periodEnd).toLocaleDateString()}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="grid gap-4 lg:grid-cols-3">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Strengths</p>
+                      <ul className="mt-1 list-disc pl-5 text-sm text-muted-foreground">
+                        {weeklySummary.strengths.map((s) => (
+                          <li key={s}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Risks</p>
+                      <ul className="mt-1 list-disc pl-5 text-sm text-muted-foreground">
+                        {weeklySummary.risks.map((r) => (
+                          <li key={r}>{r}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Interventions</p>
+                      <ul className="mt-1 list-disc pl-5 text-sm text-muted-foreground">
+                        {weeklySummary.interventions.map((i) => (
+                          <li key={i}>{i}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="lg:col-span-3 grid gap-3 sm:grid-cols-3">
+                      <Card className="bg-muted/30">
+                        <CardContent className="p-4">
+                          <p className="text-xs text-muted-foreground">Learning Growth</p>
+                          <p className="text-2xl font-bold text-foreground">
+                            {weeklySummary.metrics.learningGain}%
+                          </p>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-muted/30">
+                        <CardContent className="p-4">
+                          <p className="text-xs text-muted-foreground">Learning Activity</p>
+                          <p className="text-2xl font-bold text-foreground">
+                            {weeklySummary.metrics.engagement}
+                          </p>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-muted/30">
+                        <CardContent className="p-4">
+                          <p className="text-xs text-muted-foreground">Learning Consistency (D7/W4)</p>
+                          <p className="text-2xl font-bold text-foreground">
+                            {weeklySummary.metrics.retention}%
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+              </section>
+            )}
 
             <div className="grid gap-6 lg:grid-cols-2">
               <Card>

@@ -6,6 +6,8 @@ import type {
   ProgressProfileDto,
   TopicProgressRowDto,
   TopicQuizAttemptDto,
+  FocusLoopRecommendation,
+  WeeklyInterventionSummaryDto,
   ExamPaperSummaryDto,
   ExamPaperDetailDto,
   ExamAttemptDto,
@@ -63,6 +65,13 @@ export const getPracticeSubjects = () =>
 export const getQuestions = (subjectId: string, topicId: string) =>
   fetchJson<Question[]>(`/practice/subjects/${subjectId}/topics/${topicId}/questions`);
 
+export const getFocusLoop = (subjectId: string, topicId: string, tag: string) => {
+  const q = new URLSearchParams({ tag });
+  return fetchJson<FocusLoopRecommendation>(
+    `/practice/subjects/${subjectId}/topics/${topicId}/focus-loop?${q.toString()}`
+  );
+};
+
 export const login = (email: string, password: string) =>
   fetchJson<LoginResponse>("/auth/login", {
     method: "POST",
@@ -103,6 +112,9 @@ export const putTopicProgress = (
   body: {
     lessons?: Record<string, { completed: boolean; watchedAt?: string }>;
     bestScore?: number;
+    focusLoopsCompleted?: number;
+    strategyCardOpens?: number;
+    learningGain?: number;
   }
 ) =>
   fetchJson<TopicProgressRowDto>(`/progress/topics/${subjectId}/${topicId}`, {
@@ -118,7 +130,8 @@ export const postQuizAttempt = (
     topicId: string;
     score: number;
     totalQuestions: number;
-    responses: Array<{ questionId: string; selectedIndex: number; correct: boolean }>;
+    responses: Array<{ questionId: string; selectedIndex: number; correct: boolean; misconceptionTags?: string[] }>;
+    focusLoopTag?: string;
   }
 ) =>
   fetchJson<TopicQuizAttemptDto>("/progress/quiz-attempts", {
@@ -126,6 +139,9 @@ export const postQuizAttempt = (
     body,
     token,
   });
+
+export const getWeeklyInterventionSummary = (token: string) =>
+  fetchJson<WeeklyInterventionSummaryDto>("/dashboard/weekly-summary", { token });
 
 export const listTopicQuizAttempts = (token: string, subjectId: string, topicId: string) => {
   const q = new URLSearchParams({ subjectId, topicId });

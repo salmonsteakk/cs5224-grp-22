@@ -353,7 +353,14 @@ npm run deploy
 ## Features
 
 - **Learning:** Browse Math and Science subjects, pick a topic, and watch simulated video lessons
-- **Practice:** Take multiple-choice quizzes per topic with instant feedback and explanations
+- **Practice:** Take multiple-choice quizzes per topic with instant feedback, Smart Answer Tips, and Targeted Practice Boost loops
 - **Dashboard:** Track total points, level progression, lessons completed, quiz accuracy, and 6 unlockable achievements
+- **Parent weekly summary:** View strengths, risks, and intervention recommendations for the past 7 days
 - **Progress:** Stored in localStorage for guest users and in DynamoDB for authenticated users
 - **Responsive:** Mobile hamburger menu, responsive grid layouts
+
+## Differentiation Success Metrics
+
+- **Learning Growth metric:** `% improvement from prior accuracy baseline to latest attempt accuracy`, tracked per learner and surfaced in weekly summaries.
+- **Learning Activity metric:** composite score from active learning days, quiz attempts, strategy-card usage, and loop completion actions.
+- **Learning Consistency metric:** D7/W4 return-rate proxy based on first-active and subsequent activity windows, reported in weekly parent summary cards.
