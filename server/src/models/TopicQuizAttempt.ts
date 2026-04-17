@@ -5,6 +5,11 @@ const responseSchema = new dynamoose.Schema({
   questionId: { type: String, required: true },
   selectedIndex: { type: Number, required: true },
   correct: { type: Boolean, required: true },
+  misconceptionTags: {
+    type: Array,
+    schema: [String],
+    default: [],
+  },
 });
 
 const topicQuizAttemptSchema = new dynamoose.Schema({
@@ -30,6 +35,10 @@ const topicQuizAttemptSchema = new dynamoose.Schema({
   submittedAt: { type: String, required: true },
   score: { type: Number, required: true },
   totalQuestions: { type: Number, required: true },
+  learningGain: { type: Number, required: false },
+  engagementScore: { type: Number, required: false },
+  retentionScore: { type: Number, required: false },
+  focusLoopTag: { type: String, required: false },
   responses: {
     type: Array,
     schema: [responseSchema],

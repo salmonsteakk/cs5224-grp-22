@@ -12,6 +12,8 @@ export interface Question {
   options: string[];
   correctAnswer: number;
   explanation: string;
+  misconceptionTags?: string[];
+  strategyFocus?: "command-word" | "elimination" | "working-backwards" | "evidence";
 }
 
 export interface Topic {
@@ -53,4 +55,37 @@ export interface AuthUser {
   name: string;
   role: User["role"];
   status: User["status"];
+}
+
+export interface StrategyCoachHint {
+  title: string;
+  focus: string;
+  steps: string[];
+}
+
+export interface PracticeQuestion extends Question {
+  misconceptionTags: string[];
+  strategyHint: StrategyCoachHint;
+}
+
+export interface QuizAttemptResponse {
+  questionId: string;
+  selectedIndex: number;
+  correct: boolean;
+  misconceptionTags?: string[];
+}
+
+export interface LearningMetrics {
+  learningGain: number;
+  engagement: number;
+  retention: number;
+}
+
+export interface WeeklyInterventionSummary {
+  periodStart: string;
+  periodEnd: string;
+  strengths: string[];
+  risks: string[];
+  interventions: string[];
+  metrics: LearningMetrics;
 }

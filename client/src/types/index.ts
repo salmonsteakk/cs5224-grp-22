@@ -12,6 +12,14 @@ export interface Question {
   options: string[];
   correctAnswer: number;
   explanation: string;
+  misconceptionTags?: string[];
+  strategyHint?: StrategyCoachHint;
+}
+
+export interface StrategyCoachHint {
+  title: string;
+  focus: string;
+  steps: string[];
 }
 
 export interface Topic {
@@ -59,12 +67,14 @@ export interface QuizQuestionResponse {
   questionId: string;
   selectedIndex: number;
   correct: boolean;
+  misconceptionTags?: string[];
 }
 
 export interface QuizCompletionResult {
   score: number;
   totalQuestions: number;
   responses: QuizQuestionResponse[];
+  focusLoopTag?: string;
 }
 
 export interface QuizAttempt {
@@ -82,6 +92,9 @@ export interface TopicProgress {
   quizAttemptCount?: number;
   quizScoreSum?: number;
   quizQuestionSum?: number;
+  focusLoopsCompleted?: number;
+  strategyCardOpens?: number;
+  learningGain?: number;
 }
 
 export interface SubjectProgress {
@@ -93,6 +106,9 @@ export interface StudentProgress {
   totalPoints: number;
   level: number;
   achievements: string[];
+  activeDays?: string[];
+  firstActiveAt?: string;
+  lastActiveAt?: string;
 }
 
 export interface SubjectStats {
@@ -113,6 +129,8 @@ export interface ProgressProfileDto {
   totalPoints: number;
   level: number;
   achievements: string[];
+  firstActiveAt?: string;
+  lastActiveAt?: string;
   updatedAt: string;
 }
 
@@ -126,6 +144,9 @@ export interface TopicProgressRowDto {
   quizAttemptCount: number;
   quizScoreSum?: number;
   quizQuestionSum?: number;
+  focusLoopsCompleted?: number;
+  strategyCardOpens?: number;
+  learningGain?: number;
   updatedAt: string;
 }
 
@@ -138,6 +159,32 @@ export interface TopicQuizAttemptDto {
   score: number;
   totalQuestions: number;
   responses: QuizQuestionResponse[];
+  learningGain?: number;
+  engagementScore?: number;
+  retentionScore?: number;
+  focusLoopTag?: string;
+  focusLoop?: FocusLoopRecommendation;
+}
+
+export interface FocusLoopRecommendation {
+  misconceptionTag: string;
+  rationale: string;
+  questions: Question[];
+}
+
+export interface LearningMetrics {
+  learningGain: number;
+  engagement: number;
+  retention: number;
+}
+
+export interface WeeklyInterventionSummaryDto {
+  periodStart: string;
+  periodEnd: string;
+  strengths: string[];
+  risks: string[];
+  interventions: string[];
+  metrics: LearningMetrics;
 }
 
 export interface ExamPaperSummaryDto {
