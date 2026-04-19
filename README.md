@@ -415,4 +415,9 @@ Before running `npm run deploy`, verify:
 - **Learning Activity metric:** composite score from active learning days, quiz attempts, strategy-card usage, and loop completion actions.
 - **Learning Consistency metric:** D7/W4 return-rate proxy based on first-active and subsequent activity windows, reported in weekly parent summary cards.
 
-# AI Usage for 
+# Usage of AI
+The following tools were used in the development of LearnBright:
+
+`v0`, `Claude Code` - Used for the generation of the initial skeleton code for LearnBright. Final output did a decent job on frontend, but everything was stored locally. Hence, we redid the API + Database design, and synced it with AWS
+
+`Cursor`, `GitHub Copilot` - Tab Autocomplete and AI Chat on the IDE used to help feature building
