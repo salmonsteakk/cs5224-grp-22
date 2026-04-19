@@ -420,4 +420,7 @@ The following tools were used in the development of LearnBright:
 
 `v0`, `Claude Code` - Used for the generation of the initial skeleton code for LearnBright. Final output did a decent job on frontend, but everything was stored locally. Hence, we redid the API + Database design, and synced it with AWS
 
-`Cursor`, `GitHub Copilot` - Tab Autocomplete and AI Chat on the IDE used to help feature building
+`Cursor`, `GitHub Copilot` - Tab Autocomplete and AI Chat on the IDE used to help feature building. Also used to generate sample questions for quizzes and exams
+
+`Google Veo 3` - Used to generate sample video lessons
+
