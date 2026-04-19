@@ -67,6 +67,7 @@ export function Quiz({ questions, subjectColor, onComplete, onStrategyViewed, sh
 
   const handleRestart = () => {
     completionSentRef.current = false;
+    completionNotifiedParentRef.current = false;
     setCurrentIndex(0);
     setSelectedAnswer(null);
     setShowResult(false);
@@ -78,17 +79,22 @@ export function Quiz({ questions, subjectColor, onComplete, onStrategyViewed, sh
   };
 
   const handleReviewClick = () => {
-    if (completionDataRef.current) {
-      if (onReview) {
-        onReview(completionDataRef.current);
-      } else {
-        onComplete(completionDataRef.current);
-      }
+    const data = completionDataRef.current;
+    if (!data) return;
+    if (onReview) {
+      onReview(data);
+      return;
+    }
+    if (!completionNotifiedParentRef.current) {
+      onComplete(data);
+      completionNotifiedParentRef.current = true;
     }
   };
 
   const completionSentRef = useRef(false);
   const completionDataRef = useRef<QuizCompletionResult | null>(null);
+  /** True after `onComplete` ran for this attempt (avoids double-submit if user clicks review before parent unmounts). */
+  const completionNotifiedParentRef = useRef(false);
 
   useEffect(() => {
     if (!isQuizComplete || completionSentRef.current) return;
@@ -108,13 +114,16 @@ export function Quiz({ questions, subjectColor, onComplete, onStrategyViewed, sh
       .flatMap((r) => r.misconceptionTags ?? []);
     const focusLoopTag = missedTags.length > 0 ? missedTags[0] : undefined;
     setScore(finalScore);
-    completionDataRef.current = {
+    const result: QuizCompletionResult = {
       score: finalScore,
       totalQuestions: questions.length,
       responses,
       focusLoopTag,
     };
-  }, [isQuizComplete, questions]);
+    completionDataRef.current = result;
+    onComplete(result);
+    completionNotifiedParentRef.current = true;
+  }, [isQuizComplete, questions, onComplete]);
 
   const getScoreMessage = () => {
     const percentage = (score / questions.length) * 100;

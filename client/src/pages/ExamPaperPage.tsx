@@ -42,12 +42,12 @@ export default function ExamPaperPage() {
     }
   }, [loading, paper, error, navigate]);
 
-  const handleReviewClick = useCallback(
+  /** Persist attempt + go to review (called automatically when the quiz finishes). */
+  const handleExamComplete = useCallback(
     (result: QuizCompletionResult) => {
       setCurrentAttemptResult(result);
       setExamState("review");
 
-      // Submit the attempt asynchronously after the state transition
       if (token && paperId) {
         void (async () => {
           try {
@@ -67,6 +67,12 @@ export default function ExamPaperPage() {
     },
     [token, paperId, refreshProgressFromServer, refreshAttempts]
   );
+
+  /** UI only — persistence already ran via `onComplete` when the quiz completed. */
+  const handleContinueToReview = useCallback((result: QuizCompletionResult) => {
+    setCurrentAttemptResult(result);
+    setExamState("review");
+  }, []);
 
   const handleStartExam = () => {
     setExamState("quiz");
@@ -178,9 +184,9 @@ export default function ExamPaperPage() {
           <Quiz
             questions={paper.questions}
             subjectColor={subjectColor}
-            onComplete={handleReviewClick}
+            onComplete={handleExamComplete}
             showReviewButton={true}
-            onReview={handleReviewClick}
+            onReview={handleContinueToReview}
           />
         )}
 
