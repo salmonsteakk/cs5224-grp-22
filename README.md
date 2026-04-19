@@ -166,7 +166,6 @@ All three services are orchestrated via `docker-compose.yml`:
 
 ```bash
 git clone <repo-url>
-cd v0-demo
 ```
 
 **Install AWS CLI v2:**
@@ -415,3 +414,5 @@ Before running `npm run deploy`, verify:
 - **Learning Growth metric:** `% improvement from prior accuracy baseline to latest attempt accuracy`, tracked per learner and surfaced in weekly summaries.
 - **Learning Activity metric:** composite score from active learning days, quiz attempts, strategy-card usage, and loop completion actions.
 - **Learning Consistency metric:** D7/W4 return-rate proxy based on first-active and subsequent activity windows, reported in weekly parent summary cards.
+
+# AI Usage for 
