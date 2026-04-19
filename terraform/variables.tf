@@ -27,3 +27,9 @@ variable "server_memory" {
   type        = number
   default     = 512
 }
+
+variable "hf_token" {
+  description = "Hugging Face API token for chat completions"
+  type        = string
+  sensitive   = true
+}
