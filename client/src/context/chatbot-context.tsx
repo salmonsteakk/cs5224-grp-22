@@ -5,19 +5,31 @@ interface ChatbotContextType {
   toggleSidebar: () => void;
   closeSidebar: () => void;
   openSidebar: () => void;
+  hideAssistantButton: boolean;
+  setHideAssistantButton: (hidden: boolean) => void;
 }
 
 const ChatbotContext = createContext<ChatbotContextType | undefined>(undefined);
 
 export function ChatbotProvider({ children }: { children: ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [hideAssistantButton, setHideAssistantButton] = useState(false);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
   const closeSidebar = () => setIsSidebarOpen(false);
   const openSidebar = () => setIsSidebarOpen(true);
 
   return (
-    <ChatbotContext.Provider value={{ isSidebarOpen, toggleSidebar, closeSidebar, openSidebar }}>
+    <ChatbotContext.Provider
+      value={{
+        isSidebarOpen,
+        toggleSidebar,
+        closeSidebar,
+        openSidebar,
+        hideAssistantButton,
+        setHideAssistantButton,
+      }}
+    >
       {children}
     </ChatbotContext.Provider>
   );
