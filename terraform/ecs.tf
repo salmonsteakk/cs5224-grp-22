@@ -32,6 +32,7 @@ resource "aws_ecs_task_definition" "api" {
       { name = "PORT", value = tostring(var.server_port) },
       { name = "NODE_ENV", value = "production" },
       { name = "AWS_REGION", value = var.aws_region },
+      { name = "HF_TOKEN", value = var.hf_token },
     ]
 
     logConfiguration = {
