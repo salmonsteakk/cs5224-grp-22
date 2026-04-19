@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { Bot } from "lucide-react";
 import { AuthProvider } from "./context/auth-context";
 import { ProgressProvider } from "./context/progress-context";
-import { ChatbotProvider } from "./context/chatbot-context";
+import { ChatbotProvider, useChatbot } from "./context/chatbot-context";
+import { Button } from "./components/ui/button";
 import HomePage from "./pages/HomePage";
 import LearnPage from "./pages/LearnPage";
 import SubjectLearnPage from "./pages/SubjectLearnPage";
@@ -22,6 +24,7 @@ import { isAssistantRoute } from "./lib/chat-assistant-routes";
 function AppRoutes() {
   const { pathname } = useLocation();
   const showAssistant = isAssistantRoute(pathname);
+  const { isSidebarOpen, toggleSidebar } = useChatbot();
 
   return (
     <div className="min-h-screen flex items-start">
@@ -47,6 +50,18 @@ function AppRoutes() {
         </Routes>
       </div>
       {showAssistant && <ChatbotSidebar />}
+      {showAssistant && !isSidebarOpen && (
+        <Button
+          size="lg"
+          className="fixed bottom-6 right-6 rounded-full shadow-lg hover:shadow-xl transition-shadow"
+          onClick={toggleSidebar}
+          title="Open AI study assistant"
+          aria-label="Open AI study assistant"
+        >
+          <Bot className="h-5 w-5 mr-2" />
+          Study Assistant
+        </Button>
+      )}
     </div>
   );
 }
