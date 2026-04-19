@@ -166,7 +166,6 @@ All three services are orchestrated via `docker-compose.yml`:
 
 ```bash
 git clone <repo-url>
-cd v0-demo
 ```
 
 **Install AWS CLI v2:**
