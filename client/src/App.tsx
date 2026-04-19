@@ -24,7 +24,7 @@ import { isAssistantRoute } from "./lib/chat-assistant-routes";
 function AppRoutes() {
   const { pathname } = useLocation();
   const showAssistant = isAssistantRoute(pathname);
-  const { isSidebarOpen, toggleSidebar } = useChatbot();
+  const { isSidebarOpen, toggleSidebar, hideAssistantButton } = useChatbot();
 
   return (
     <div className="min-h-screen flex items-start">
@@ -50,7 +50,7 @@ function AppRoutes() {
         </Routes>
       </div>
       {showAssistant && <ChatbotSidebar />}
-      {showAssistant && !isSidebarOpen && (
+      {showAssistant && !isSidebarOpen && !hideAssistantButton && (
         <Button
           size="lg"
           className="fixed bottom-6 right-6 rounded-full shadow-lg hover:shadow-xl transition-shadow"

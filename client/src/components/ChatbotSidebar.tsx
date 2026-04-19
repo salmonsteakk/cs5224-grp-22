@@ -17,7 +17,11 @@ interface Message {
   reportError?: string;
 }
 
-export default function ChatbotSidebar() {
+interface ChatbotSidebarProps {
+  forceRender?: boolean;
+}
+
+export default function ChatbotSidebar({ forceRender = false }: ChatbotSidebarProps) {
   const { isSidebarOpen, closeSidebar } = useChatbot();
   const { pathname } = useLocation();
   const { user, token } = useAuth();
@@ -27,7 +31,7 @@ export default function ChatbotSidebar() {
   const [loading, setLoading] = useState(false);
 
   const apiBase = import.meta.env.VITE_API_URL || "/api";
-  const onAssistantRoute = isAssistantRoute(pathname);
+  const onAssistantRoute = isAssistantRoute(pathname) || forceRender;
 
   useEffect(() => {
     if (!onAssistantRoute && isSidebarOpen) {

@@ -10,9 +10,11 @@ interface QuizProps {
   subjectColor: "math" | "science";
   onComplete: (result: QuizCompletionResult) => void;
   onStrategyViewed?: () => void;
+  showReviewButton?: boolean;
+  onReview?: (result: QuizCompletionResult) => void;
 }
 
-export function Quiz({ questions, subjectColor, onComplete, onStrategyViewed }: QuizProps) {
+export function Quiz({ questions, subjectColor, onComplete, onStrategyViewed, showReviewButton = false, onReview }: QuizProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -75,7 +77,18 @@ export function Quiz({ questions, subjectColor, onComplete, onStrategyViewed }: 
     answersRef.current = new Array(questions.length).fill(null);
   };
 
+  const handleReviewClick = () => {
+    if (completionDataRef.current) {
+      if (onReview) {
+        onReview(completionDataRef.current);
+      } else {
+        onComplete(completionDataRef.current);
+      }
+    }
+  };
+
   const completionSentRef = useRef(false);
+  const completionDataRef = useRef<QuizCompletionResult | null>(null);
 
   useEffect(() => {
     if (!isQuizComplete || completionSentRef.current) return;
@@ -94,13 +107,14 @@ export function Quiz({ questions, subjectColor, onComplete, onStrategyViewed }: 
       .filter((r) => !r.correct)
       .flatMap((r) => r.misconceptionTags ?? []);
     const focusLoopTag = missedTags.length > 0 ? missedTags[0] : undefined;
-    onComplete({
+    setScore(finalScore);
+    completionDataRef.current = {
       score: finalScore,
       totalQuestions: questions.length,
       responses,
       focusLoopTag,
-    });
-  }, [isQuizComplete, questions, onComplete]);
+    };
+  }, [isQuizComplete, questions]);
 
   const getScoreMessage = () => {
     const percentage = (score / questions.length) * 100;
@@ -141,10 +155,22 @@ export function Quiz({ questions, subjectColor, onComplete, onStrategyViewed }: 
           </div>
 
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1 gap-2" onClick={handleRestart}>
-              <RotateCcw className="h-4 w-4" />
-              Try Again
-            </Button>
+            {showReviewButton ? (
+              <>
+                <Button variant="outline" className="flex-1 gap-2" onClick={handleRestart}>
+                  <RotateCcw className="h-4 w-4" />
+                  Try Again
+                </Button>
+                <Button className={`flex-1 gap-2 ${accentColor} text-white hover:opacity-90`} onClick={handleReviewClick}>
+                  Continue to Review
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" className="flex-1 gap-2" onClick={handleRestart}>
+                <RotateCcw className="h-4 w-4" />
+                Try Again
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
