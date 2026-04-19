@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { X, Send, MessageCircle, ChevronLeft, ChevronRight, Flag } from "lucide-react";
+import { X, Send, MessageCircle, Flag } from "lucide-react";
 import { useChatbot } from "@/context/chatbot-context";
 import { useAuth } from "@/context/auth-context";
 import { useProgress } from "@/context/progress-context";
@@ -18,7 +18,7 @@ interface Message {
 }
 
 export default function ChatbotSidebar() {
-  const { isSidebarOpen, toggleSidebar, closeSidebar } = useChatbot();
+  const { isSidebarOpen, closeSidebar } = useChatbot();
   const { pathname } = useLocation();
   const { user, token } = useAuth();
   const { progress } = useProgress();
@@ -35,7 +35,7 @@ export default function ChatbotSidebar() {
     }
   }, [onAssistantRoute, isSidebarOpen, closeSidebar]);
 
-  if (!onAssistantRoute) {
+  if (!onAssistantRoute || !isSidebarOpen) {
     return null;
   }
 
@@ -114,29 +114,10 @@ export default function ChatbotSidebar() {
 
   return (
     <div
-      className={`sticky top-0 flex h-dvh max-h-dvh shrink-0 flex-col overflow-hidden border-l border-border bg-background transition-all duration-300 ease-in-out ${
-        isSidebarOpen ? "w-96" : "w-12"
-      }`}
+      className="sticky top-0 flex h-dvh max-h-dvh shrink-0 flex-col overflow-hidden border-l border-border bg-background transition-all duration-300 ease-in-out w-96"
     >
-      {/* Toggle Button - Always visible when collapsed */}
-      {!isSidebarOpen && (
-        <div className="flex min-h-0 flex-1 w-12 items-center justify-center bg-background">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="h-8 w-8"
-            title="Open Study Assistant"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-
       {/* Chat Content */}
-      <div
-        className={`flex min-h-0 flex-1 flex-col ${isSidebarOpen ? "flex" : "hidden"} w-full`}
-      >
+      <div className="flex min-h-0 flex-1 flex-col w-full">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="flex items-center gap-2">
@@ -145,17 +126,6 @@ export default function ChatbotSidebar() {
           </div>
           <div className="flex items-center gap-1">
             <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleSidebar}
-              className="h-8 w-8"
-              title="Collapse sidebar"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
               onClick={closeSidebar}
               className="h-8 w-8"
               title="Close sidebar"
